@@ -38,21 +38,22 @@ const StatusFilter: React.FC<StatusFilterProps> = ({
     }
   ]
 
-  const getSelectedStyle = (filterKey: string) => {
-    if (selectedFilter === filterKey) {
-      switch (filterKey) {
-        case 'New':
-          return 'bg-green-500/20 border-green-400 text-green-300'
-        case 'Migrating':
-          return 'bg-yellow-500/20 border-yellow-400 text-yellow-300'
-        case 'Migrated':
-          return 'bg-blue-500/20 border-blue-400 text-blue-300'
-        default:
-          return 'bg-gray-600/20 border-gray-400 text-gray-300'
-      }
-    }
-    return ''
-  }
+  // Commented out unused function
+  // const getSelectedStyle = (filterKey: string) => {
+  //   if (selectedFilter === filterKey) {
+  //     switch (filterKey) {
+  //       case 'New':
+  //         return 'bg-green-500/20 border-green-400 text-green-300'
+  //       case 'Migrating':
+  //         return 'bg-yellow-500/20 border-yellow-400 text-yellow-300'
+  //       case 'Migrated':
+  //         return 'bg-blue-500/20 border-blue-400 text-blue-300'
+  //       default:
+  //         return 'bg-gray-600/20 border-gray-400 text-gray-300'
+  //     }
+  //   }
+  //   return ''
+  // }
 
   return (
     <div className="flex gap-2 mb-4">

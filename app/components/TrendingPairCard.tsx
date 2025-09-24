@@ -8,7 +8,7 @@ interface TrendingPairCardProps {
   rank?: number
 }
 
-const TrendingPairCard: React.FC<TrendingPairCardProps> = ({ pair, rank }) => {
+const TrendingPairCard: React.FC<TrendingPairCardProps> = ({ pair }) => {
   const renderPrice = (price: number) => {
     if (price >= 1) {
       return `$${price.toFixed(2)}`
@@ -119,7 +119,10 @@ const TrendingPairCard: React.FC<TrendingPairCardProps> = ({ pair, rank }) => {
         {/* Left: Large Icon */}
         <div className="w-20 h-20 rounded-xs bg-gray-800 flex items-center justify-center text-white font-regular text-xl overflow-hidden flex-shrink-0 border-1 border-gray-800">
           {pair.image ? (
-            <img src={pair.image} alt={pair.symbol} className="w-full h-full object-cover rounded-xl" />
+            <>
+              {/* Using regular img tag for external URLs - Next.js Image optimization not needed for dynamic crypto token images */}
+              <img src={pair.image} alt={pair.symbol} className="w-full h-full object-cover rounded-xl" />
+            </>
           ) : (
             pair.symbol.charAt(0).toUpperCase()
           )}

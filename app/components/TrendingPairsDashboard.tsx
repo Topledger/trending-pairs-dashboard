@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
-import { useWebSocket, TrendingPair } from '../hooks/useWebSocket'
+import { useWebSocket } from '../hooks/useWebSocket'
 import TrendingPairCard from './TrendingPairCard'
 import StatusFilter from './StatusFilter'
 
@@ -116,7 +116,7 @@ const TrendingPairsDashboard: React.FC = () => {
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
               <div className="text-gray-400 text-xl mb-4">🔍</div>
-              <p className="text-gray-400">No pairs found for "{selectedFilter}" status</p>
+              <p className="text-gray-400">No pairs found for &ldquo;{selectedFilter}&rdquo; status</p>
               <button 
                 onClick={() => setSelectedFilter('New')}
                 className="mt-4 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"

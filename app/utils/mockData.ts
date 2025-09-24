@@ -110,6 +110,8 @@ export const generateMockData = (): TrendingPair[] => {
 
   return mockTokens.map(token => ({
     ...token,
+    mintAddress: `${token.symbol}mint${Math.random().toString(36).substr(2, 8)}`,
+    creationTimestamp: Date.now() - Math.random() * 86400000, // Random timestamp within last day
     priceChange24h: (token.price * token.priceChangePercentage24h) / 100
   }))
 }

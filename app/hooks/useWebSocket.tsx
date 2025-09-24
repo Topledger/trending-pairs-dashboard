@@ -41,17 +41,17 @@ interface UseWebSocketReturn {
 }
 
 // Helper function to process pump-fun WebSocket data into our TrendingPair format
-const processRawPair = (rawData: any): TrendingPair => {
+const processRawPair = (rawData: Record<string, unknown>): TrendingPair => {
   // Handle the exact format from your WebSocket
-  const symbol = rawData.symbol || 'UNKNOWN'
-  const name = rawData.name || rawData.symbol || 'Unknown Token'
-  const price = parseFloat(rawData.price_usd || 0)
-  const marketCap = parseFloat(rawData.market_cap || 0)
-  const volume24h = parseFloat(rawData.total_volume_24h || rawData.buy_volume_24h || 0)
+  const symbol = String(rawData.symbol || 'UNKNOWN')
+  const name = String(rawData.name || rawData.symbol || 'Unknown Token')
+  const price = parseFloat(String(rawData.price_usd || '0'))
+  const marketCap = parseFloat(String(rawData.market_cap || '0'))
+  const volume24h = parseFloat(String(rawData.total_volume_24h || rawData.buy_volume_24h || '0'))
   
   // Calculate price change percentage if we have buy/sell counts
-  const buyCount = parseInt(rawData.buy_count || 0)
-  const sellCount = parseInt(rawData.sell_count || 0)
+  const buyCount = parseInt(String(rawData.buy_count || '0'))
+  const sellCount = parseInt(String(rawData.sell_count || '0'))
   const totalTrades = buyCount + sellCount
   let priceChangePercentage24h = 0
   
@@ -61,10 +61,10 @@ const processRawPair = (rawData: any): TrendingPair => {
   }
   
   // Handle creation timestamp for age
-  const creationTimestamp = rawData.creation_timestamp || Date.now()
+  const creationTimestamp = Number(rawData.creation_timestamp) || Date.now()
   let age = 'unknown'
   if (rawData.creation_timestamp) {
-    const creationTime = new Date(rawData.creation_timestamp)
+    const creationTime = new Date(Number(rawData.creation_timestamp))
     const now = new Date()
     const diffMs = now.getTime() - creationTime.getTime()
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
@@ -80,7 +80,7 @@ const processRawPair = (rawData: any): TrendingPair => {
   
   if (rawData.category) {
     // Use the category field directly from WebSocket message
-    const category = rawData.category.toLowerCase()
+    const category = String(rawData.category).toLowerCase()
     if (category === 'new') status = 'New'
     else if (category === 'migrating') status = 'Migrating' 
     else if (category === 'migrated') status = 'Migrated'
@@ -88,7 +88,7 @@ const processRawPair = (rawData: any): TrendingPair => {
     // Fallback to migration fields
     if (rawData.is_migrated === true) {
       status = 'Migrated'
-    } else if (rawData.migration_timestamp && rawData.migration_timestamp > 0) {
+    } else if (rawData.migration_timestamp && Number(rawData.migration_timestamp) > 0) {
       status = 'Migrating'
     }
   }
@@ -96,7 +96,7 @@ const processRawPair = (rawData: any): TrendingPair => {
   return {
     symbol,
     name,
-    mintAddress: rawData.mint || rawData.mint_address || symbol,
+    mintAddress: String(rawData.mint || rawData.mint_address || symbol),
     price,
     marketCap,
     volume24h,
@@ -105,22 +105,22 @@ const processRawPair = (rawData: any): TrendingPair => {
     age,
     status,
     creationTimestamp,
-    image: rawData.image_uri,
+    image: rawData.image_uri ? String(rawData.image_uri) : undefined,
     social: {
-      website: rawData.website,
-      twitter: rawData.twitter,
-      telegram: rawData.telegram
+      website: rawData.website ? String(rawData.website) : undefined,
+      twitter: rawData.twitter ? String(rawData.twitter) : undefined,
+      telegram: rawData.telegram ? String(rawData.telegram) : undefined
     },
     metrics: {
-      holders: parseInt(rawData.holder_count || 0),
+      holders: parseInt(String(rawData.holder_count || '0')),
       transactions: buyCount + sellCount,
       buyCount: buyCount,
       sellCount: sellCount,
-      liquidity: parseFloat(rawData.liquidity_usd || 0),
-      devHoldingPct: parseFloat(rawData.dev_holding_pct || 0),
-      bundledWalletsPct: parseFloat(rawData.bundled_wallets_pct || 0),
-      sniperWalletsPct: parseFloat(rawData.sniper_wallets_pct || 0),
-      top10HoldersPct: parseFloat(rawData.top10_holders_pct || 0)
+      liquidity: parseFloat(String(rawData.liquidity_usd || '0')),
+      devHoldingPct: parseFloat(String(rawData.dev_holding_pct || '0')),
+      bundledWalletsPct: parseFloat(String(rawData.bundled_wallets_pct || '0')),
+      sniperWalletsPct: parseFloat(String(rawData.sniper_wallets_pct || '0')),
+      top10HoldersPct: parseFloat(String(rawData.top10_holders_pct || '0'))
     }
   }
 }
