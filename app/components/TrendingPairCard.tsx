@@ -88,20 +88,6 @@ const TrendingPairCard: React.FC<TrendingPairCardProps> = ({ pair }) => {
   top10HoldersPercentage = Math.min(top10HoldersPercentage, 100)
   devHoldingPercentage = Math.min(devHoldingPercentage, 100)
   
-  // If we have very few holders, top 10 holders % should be reasonable
-  // This suggests the data might be mock/placeholder
-  if (holdersCount > 0 && holdersCount < 10 && top10HoldersPercentage > 90) {
-    console.warn(`⚠️ Token ${pair.symbol}: ${holdersCount} holders but top 10 hold ${top10HoldersPercentage}% - likely mock data`)
-  }
-  
-  // Debug logging to see actual values
-  console.log(`Token ${pair.symbol}:`, {
-    holders: holdersCount,
-    sniper: sniperPercentage.toFixed(1),
-    top10: top10HoldersPercentage.toFixed(1),
-    dev: devHoldingPercentage.toFixed(1),
-    rawMetrics: pair.metrics
-  })
   
   // Buy/Sell data for the bar
   const buyCount = pair.metrics?.buyCount || 0

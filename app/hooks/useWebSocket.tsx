@@ -67,10 +67,11 @@ const extractImageFromUri = async (uri: string | undefined): Promise<string | un
       fetchUrl = uri.replace('ipfs://', 'https://ipfs.io/ipfs/')
     }
     
-    // Fetch metadata JSON
+    // Fetch metadata JSON via proxy to avoid CORS
     if (fetchUrl.includes('http')) {
       try {
-        const response = await fetch(fetchUrl, { 
+        const proxyUrl = `/api/proxy-metadata?url=${encodeURIComponent(uri)}`
+        const response = await fetch(proxyUrl, { 
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -93,7 +94,7 @@ const extractImageFromUri = async (uri: string | undefined): Promise<string | un
           }
         }
       } catch (fetchError) {
-        console.warn('Failed to fetch metadata from URI:', fetchError)
+        // Silent fail
       }
     }
     
@@ -101,7 +102,6 @@ const extractImageFromUri = async (uri: string | undefined): Promise<string | un
     metadataCache.set(uri, null)
     return undefined
   } catch (error) {
-    console.warn('Error extracting image from URI:', error)
     return undefined
   }
 }
@@ -123,10 +123,7 @@ const extractImageFromUriSync = (uri: string | undefined): string | undefined =>
   
   // For initial render, return undefined and trigger async fetch
   extractImageFromUri(uri).then(imageUrl => {
-    if (imageUrl) {
-      // Trigger a re-render by updating the component that uses this
-      console.log('Image URL resolved for', uri, ':', imageUrl)
-    }
+    // Silent async fetch
   })
   
   return undefined
@@ -237,7 +234,6 @@ export const useWebSocket = (url: string, selectedDex: 'pump-fun' | 'meteora-dbc
       wsRef.current = new WebSocket(url)
 
       wsRef.current.onopen = () => {
-        console.log('WebSocket connected to:', url)
         setIsConnected(true)
         setError(null)
         reconnectAttemptsRef.current = 0
@@ -250,17 +246,14 @@ export const useWebSocket = (url: string, selectedDex: 'pump-fun' | 'meteora-dbc
             categories: ['NEW', 'MIGRATING', 'MIGRATED']
           }
           wsRef.current?.send(JSON.stringify(subscribeMessage))
-          console.log(`Sent ${selectedDex} subscription message:`, subscribeMessage)
         } catch (err) {
-          console.log('Could not send subscription message:', err)
+          // Silent fail
         }
       }
 
       wsRef.current.onmessage = (event) => {
         try {
-          console.log('Raw WebSocket message received:', event.data)
           const message = JSON.parse(event.data)
-          console.log('Parsed WebSocket message:', message)
           
           // Handle category_update messages with changed_fields
           if (message.type === 'category_update' && message.data && message.changed_fields) {
@@ -268,12 +261,6 @@ export const useWebSocket = (url: string, selectedDex: 'pump-fun' | 'meteora-dbc
             const tokenData = message.data
             const changedFields = message.changed_fields
             
-            console.log('🎯 Category update received:', {
-              symbol: tokenData.symbol || tokenData.mint,
-              action: action,
-              category: message.category,
-              changedFields: changedFields
-            })
             
             // Add category to token data for processing
             const enhancedTokenData = { ...tokenData, category: message.category }
@@ -288,7 +275,6 @@ export const useWebSocket = (url: string, selectedDex: 'pump-fun' | 'meteora-dbc
               
               if (action === 'update' && existingIndex !== -1) {
                 // UPDATE: Only update changed fields for existing token
-                console.log('✅ UPDATING existing token:', tokenData.symbol || tokenData.mint, 'Changed fields:', changedFields)
                 const newData = [...prevData]
                 const existingPair = newData[existingIndex]
                 
@@ -375,9 +361,7 @@ export const useWebSocket = (url: string, selectedDex: 'pump-fun' | 'meteora-dbc
                 return newData
               } else {
                 // ADD: New token or token doesn't exist yet
-                console.log('✅ ADDING new token:', tokenData.symbol || tokenData.mint, 'Category:', message.category)
                 const processedPair = processRawPair(enhancedTokenData)
-                console.log('✅ Token processed with status:', processedPair.status)
                 
                 if (existingIndex !== -1) {
                   // Replace existing (shouldn't happen but handle it)
@@ -396,7 +380,6 @@ export const useWebSocket = (url: string, selectedDex: 'pump-fun' | 'meteora-dbc
           // Handle direct token data (fallback for other message formats)
           else if (message.symbol && message.name) {
             const processedPair = processRawPair(message)
-            console.log('📦 Direct token data received:', processedPair.symbol)
             
             setData(prevData => {
               const existingIndex = prevData.findIndex(pair => pair.symbol === processedPair.symbol)
@@ -415,7 +398,6 @@ export const useWebSocket = (url: string, selectedDex: 'pump-fun' | 'meteora-dbc
           } 
           // Handle array of pairs
           else if (Array.isArray(message)) {
-            console.log('📦 Array of tokens received:', message.length)
             const processedData = message.map(processRawPair)
               .sort((a: TrendingPair, b: TrendingPair) => b.creationTimestamp - a.creationTimestamp)
             setData(processedData)
@@ -436,12 +418,11 @@ export const useWebSocket = (url: string, selectedDex: 'pump-fun' | 'meteora-dbc
             }
           }
         } catch (err) {
-          console.error('Error parsing WebSocket message:', err, 'Raw data:', event.data)
+          // Silent parsing error
         }
       }
 
       wsRef.current.onclose = (event) => {
-        console.log('WebSocket disconnected:', event.code, event.reason)
         setIsConnected(false)
         
         // Attempt to reconnect if it wasn't a normal closure
@@ -455,12 +436,10 @@ export const useWebSocket = (url: string, selectedDex: 'pump-fun' | 'meteora-dbc
       }
 
       wsRef.current.onerror = (error) => {
-        console.error('WebSocket error:', error)
         setError('WebSocket connection error')
         setIsConnected(false)
       }
     } catch (err) {
-      console.error('Failed to create WebSocket connection:', err)
       setError('Failed to create WebSocket connection')
     }
   }, [url, selectedDex])
