@@ -9,7 +9,7 @@ const TokenDetailPage: React.FC = () => {
   const router = useRouter()
   const mintAddress = params.mintAddress as string
   
-  const { events, isConnected, error } = useKafkaConsumer()
+  const { events, isConnected, error, stats, connect, disconnect } = useKafkaConsumer()
   const [filter, setFilter] = useState<'all' | 'buy' | 'sell'>('all')
   
 
@@ -177,6 +177,25 @@ const TokenDetailPage: React.FC = () => {
           </div>
           <div className="flex items-center gap-3">
             {getConnectionStatus()}
+            <button
+              onClick={isConnected ? disconnect : connect}
+              className={`p-2 rounded-lg transition-colors ${
+                isConnected 
+                  ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' 
+                  : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+              }`}
+              title={isConnected ? 'Pause live updates' : 'Start live updates'}
+            >
+              {isConnected ? (
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              )}
+            </button>
           </div>
         </div>
 

@@ -141,7 +141,7 @@ const TrendingPairCard: React.FC<TrendingPairCardProps> = ({ pair }) => {
 
   return (
     <div 
-      className="bg-gray-950 border border-gray-800 p-2 rounded-xs transition-all duration-200 group cursor-pointer hover:border-blue-500/30 hover:bg-gray-900/50 hover:scale-[1.02]"
+      className="bg-gray-950 border border-gray-800 p-2 rounded-xs transition-all duration-200 group cursor-pointer hover:border-blue-500/50 hover:bg-gray-900/50 hover:shadow-lg hover:shadow-blue-500/10 hover:scale-[1.02]"
       onClick={handleCardClick}
       title="Click to view detailed bonding curve events for this token"
     >
@@ -274,7 +274,12 @@ const TrendingPairCard: React.FC<TrendingPairCardProps> = ({ pair }) => {
             
             {/* Top Right Stats */}
             <div className="text-right flex-shrink-0 text-sm relative">
-              
+              {/* Click indicator */}
+              <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <svg className="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </div>
               
               <div className="text-green-400 text-xs" title="24h Volume">
                 V {formatVolume(pair.volume24h)}
