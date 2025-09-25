@@ -6,6 +6,7 @@ export interface TrendingPair {
   symbol: string
   name: string
   mintAddress: string
+  uri?: string
   image?: string
   price: number
   priceChange24h: number
@@ -30,6 +31,7 @@ export interface TrendingPair {
     bundledWalletsPct?: number
     sniperWalletsPct?: number
     top10HoldersPct?: number
+    bondingCurvePct?: number
   }
 }
 
@@ -38,6 +40,96 @@ interface UseWebSocketReturn {
   isConnected: boolean
   error: string | null
   reconnect: () => void
+}
+
+// Cache for fetched metadata to avoid repeated requests
+const metadataCache = new Map<string, string | null>()
+
+// Helper function to extract image URL from URI field
+const extractImageFromUri = async (uri: string | undefined): Promise<string | undefined> => {
+  if (!uri) return undefined
+  
+  try {
+    // If URI is already an image URL, return it directly
+    if (uri.includes('http') && (uri.includes('.png') || uri.includes('.jpg') || uri.includes('.jpeg') || uri.includes('.webp') || uri.includes('.gif'))) {
+      return uri
+    }
+    
+    // Check cache first
+    if (metadataCache.has(uri)) {
+      const cached = metadataCache.get(uri)
+      return cached || undefined
+    }
+    
+    // If it's an IPFS URL, convert to HTTP gateway
+    let fetchUrl = uri
+    if (uri.startsWith('ipfs://')) {
+      fetchUrl = uri.replace('ipfs://', 'https://ipfs.io/ipfs/')
+    }
+    
+    // Fetch metadata JSON
+    if (fetchUrl.includes('http')) {
+      try {
+        const response = await fetch(fetchUrl, { 
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+          signal: AbortSignal.timeout(5000) // 5 second timeout
+        })
+        
+        if (response.ok) {
+          const metadata = await response.json()
+          const imageUrl = metadata.image || metadata.image_url || metadata.logo
+          
+          // Convert IPFS image URLs to HTTP gateway
+          if (imageUrl && imageUrl.startsWith('ipfs://')) {
+            const httpImageUrl = imageUrl.replace('ipfs://', 'https://ipfs.io/ipfs/')
+            metadataCache.set(uri, httpImageUrl)
+            return httpImageUrl
+          } else if (imageUrl) {
+            metadataCache.set(uri, imageUrl)
+            return imageUrl
+          }
+        }
+      } catch (fetchError) {
+        console.warn('Failed to fetch metadata from URI:', fetchError)
+      }
+    }
+    
+    // Cache null result to avoid repeated failed requests
+    metadataCache.set(uri, null)
+    return undefined
+  } catch (error) {
+    console.warn('Error extracting image from URI:', error)
+    return undefined
+  }
+}
+
+// Synchronous version for initial rendering
+const extractImageFromUriSync = (uri: string | undefined): string | undefined => {
+  if (!uri) return undefined
+  
+  // If URI is already an image URL, return it directly
+  if (uri.includes('http') && (uri.includes('.png') || uri.includes('.jpg') || uri.includes('.jpeg') || uri.includes('.webp') || uri.includes('.gif'))) {
+    return uri
+  }
+  
+  // Check cache for previously fetched results
+  if (metadataCache.has(uri)) {
+    const cached = metadataCache.get(uri)
+    return cached || undefined
+  }
+  
+  // For initial render, return undefined and trigger async fetch
+  extractImageFromUri(uri).then(imageUrl => {
+    if (imageUrl) {
+      // Trigger a re-render by updating the component that uses this
+      console.log('Image URL resolved for', uri, ':', imageUrl)
+    }
+  })
+  
+  return undefined
 }
 
 // Helper function to process pump-fun WebSocket data into our TrendingPair format
@@ -97,6 +189,7 @@ const processRawPair = (rawData: Record<string, unknown>): TrendingPair => {
     symbol,
     name,
     mintAddress: String(rawData.mint || rawData.mint_address || symbol),
+    uri: rawData.uri ? String(rawData.uri) : undefined,
     price,
     marketCap,
     volume24h,
@@ -105,7 +198,7 @@ const processRawPair = (rawData: Record<string, unknown>): TrendingPair => {
     age,
     status,
     creationTimestamp,
-    image: rawData.image_uri ? String(rawData.image_uri) : undefined,
+    image: extractImageFromUriSync(String(rawData.uri || '')) || (rawData.image_uri ? String(rawData.image_uri) : undefined),
     social: {
       website: rawData.website ? String(rawData.website) : undefined,
       twitter: rawData.twitter ? String(rawData.twitter) : undefined,
@@ -120,7 +213,8 @@ const processRawPair = (rawData: Record<string, unknown>): TrendingPair => {
       devHoldingPct: parseFloat(String(rawData.dev_holding_pct || '0')),
       bundledWalletsPct: parseFloat(String(rawData.bundled_wallets_pct || '0')),
       sniperWalletsPct: parseFloat(String(rawData.sniper_wallets_pct || '0')),
-      top10HoldersPct: parseFloat(String(rawData.top10_holders_pct || '0'))
+      top10HoldersPct: parseFloat(String(rawData.top10_holders_pct || '0')),
+      bondingCurvePct: parseFloat(String(rawData.bonding_curve_pct || '0'))
     }
   }
 }
@@ -261,6 +355,10 @@ export const useWebSocket = (url: string, selectedDex: 'pump-fun' | 'meteora-dbc
                     case 'top10_holders_pct':
                       if (!updatedPair.metrics) updatedPair.metrics = { holders: 0, transactions: 0, liquidity: 0 }
                       updatedPair.metrics.top10HoldersPct = parseFloat(tokenData.top10_holders_pct || 0)
+                      break
+                    case 'bonding_curve_pct':
+                      if (!updatedPair.metrics) updatedPair.metrics = { holders: 0, transactions: 0, liquidity: 0 }
+                      updatedPair.metrics.bondingCurvePct = parseFloat(tokenData.bonding_curve_pct || 0)
                       break
                   }
                 })
