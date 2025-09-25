@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package bonding_curves;
+
+// Trade event message for bonding curve platforms (Pump Fun, Raydium)
+message TradeEvent {
+  // Platform identifier ("pump-fun" or "raydium-launchlab")
+  string platform = 2;
+  
+  // Price in native units (string for precision)
+  string price_native = 3;
+  
+  // SOL amount (in SOL, not lamports)
+  double sol_amount = 4;
+  
+  // Block timestamp from blockchain
+  int64 timestamp = 5;
+  
+  // Token amount (scaled to human-readable)
+  double token_amount = 6;
+  
+  // Transaction signature/ID
+  string transaction_id = 7;
+  
+  // Trade type
+  TradeType trade_type = 8;
+  
+  // Wallet address (transaction signer)
+  string wallet_address = 9;
+  
+  // Processing performance metrics
+  uint64 processing_time_us = 10;
+  
+  // Blockchain slot number
+  uint64 slot = 11;
+  
+  // Price in USD (string for precision)
+  string price_usd = 12;
+  
+  // Base mint address (the token being traded)
+  string base_mint = 13;
+  
+  // Base mint symbol from token metadata
+  string base_mint_symbol = 14;
+  
+  // Base mint name from token metadata  
+  string base_mint_name = 15;
+  
+  // Quote mint address (SOL for bonding curves)
+  string quote_mint = 16;
+  
+  // Quote mint symbol (SOL for bonding curves)
+  string quote_mint_symbol = 17;
+  
+  // Quote mint name (Wrapped SOL for bonding curves)
+  string quote_mint_name = 18;
+  
+  // Total network fee in SOL
+  double total_network_fee = 19;
+  
+  // PnL metrics for this mint (last 7 days)
+  PnlMetrics pnl_mint_7d = 20;
+  
+  // Wallet SOL balance after transaction (in SOL, not lamports)
+  double current_sol_balance = 21;
+  
+  // Current token balance for the traded token (in UI amount)
+  double current_token_balance = 22;
+  
+  // Pool address (for AMM trades like pump-amm)
+  string pool_address = 23;
+  
+  // Current token supply (in UI amount, divided by decimals) - null if not available
+  optional double current_supply = 24;
+}
+
+// PnL metrics message
+message PnlMetrics {
+  // Unrealized PnL in USD
+  double unrealized_pnl_usd = 1;
+  
+  // Unrealized PnL percentage
+  double unrealized_pnl_pct = 2;
+  
+  // Realized PnL in USD (last 7 days)
+  double realized_pnl_usd = 3;
+  
+  // Realized PnL percentage (last 7 days)
+  double realized_pnl_pct = 4;
+}
+
+// Trade direction enum
+enum TradeType {
+  TRADE_TYPE_UNSPECIFIED = 0;
+  TRADE_TYPE_BUY = 1;
+  TRADE_TYPE_SELL = 2;
+}

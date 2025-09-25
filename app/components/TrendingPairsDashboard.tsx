@@ -62,21 +62,29 @@ const TrendingPairsDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <div className="max-w-none mx-auto px-12 py-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Trending Pairs</h1>
-          <div className="flex items-center gap-3">
-            <select
-              value={selectedDex}
-              onChange={(e) => setSelectedDex(e.target.value as 'pump-fun' | 'meteora-dbc')}
-              className="bg-gray-800 border border-gray-700 rounded px-3 py-1 text-sm text-white outline-none"
-            >
-              <option value="pump-fun">Pump Fun</option>
-              <option value="meteora-dbc">Meteora DBC</option>
-            </select>
-            {getConnectionStatus()}
-          </div>
-        </div>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <h1 className="text-2xl font-bold">Trending Pairs</h1>
+                <a 
+                  href="/events" 
+                  className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded text-sm hover:bg-purple-500/30 transition-colors"
+                >
+                  Live Events
+                </a>
+              </div>
+              <div className="flex items-center gap-3">
+                <select
+                  value={selectedDex}
+                  onChange={(e) => setSelectedDex(e.target.value as 'pump-fun' | 'meteora-dbc')}
+                  className="bg-gray-800 border border-gray-700 rounded px-3 py-1 text-sm text-white outline-none"
+                >
+                  <option value="pump-fun">Pump Fun</option>
+                  <option value="meteora-dbc">Meteora DBC</option>
+                </select>
+                {getConnectionStatus()}
+              </div>
+            </div>
 
         {/* Filters */}
         <StatusFilter

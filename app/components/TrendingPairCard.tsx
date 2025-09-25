@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import { TrendingPair } from '../hooks/useWebSocket'
 import { useImageFromUri } from '../hooks/useImageFromUri'
 
@@ -10,8 +11,15 @@ interface TrendingPairCardProps {
 }
 
 const TrendingPairCard: React.FC<TrendingPairCardProps> = ({ pair }) => {
+  const router = useRouter()
+  
   // Use the image hook to fetch image and social links from URI if needed
   const { imageUrl, loading, socialLinks } = useImageFromUri(pair.uri, pair.image)
+  
+  const handleCardClick = () => {
+    // Navigate to token detail page
+    router.push(`/token/${pair.mintAddress}`)
+  }
 
   // Get bonding curve percentage
   const bondingCurvePercentage = Math.min(pair.metrics?.bondingCurvePct || 0, 100)
@@ -132,7 +140,11 @@ const TrendingPairCard: React.FC<TrendingPairCardProps> = ({ pair }) => {
   }
 
   return (
-    <div className="bg-gray-950 border border-gray-800 p-2 rounded-xs transition-colors group">
+    <div 
+      className="bg-gray-950 border border-gray-800 p-2 rounded-xs transition-all duration-200 group cursor-pointer hover:border-blue-500/30 hover:bg-gray-900/50 hover:scale-[1.02]"
+      onClick={handleCardClick}
+      title="Click to view detailed bonding curve events for this token"
+    >
       <div className="flex gap-4">
         {/* Left: Large Icon */}
         <div className="w-20 h-20 rounded-xs bg-gray-800 flex items-center justify-center text-white font-regular text-xl overflow-hidden flex-shrink-0 relative">
@@ -200,13 +212,19 @@ const TrendingPairCard: React.FC<TrendingPairCardProps> = ({ pair }) => {
              
               <div className="flex items-center gap-1 text-gray-500 text-xs mt-1">
                 <button
-                  onClick={() => window.open(`https://solscan.io/token/${pair.mintAddress}`, '_blank')}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    window.open(`https://solscan.io/token/${pair.mintAddress}`, '_blank')
+                  }}
                   className="hover:text-gray-300 transition-colors"
                 >
                   {formatMintAddress(pair.mintAddress)}
                 </button>
                 <button
-                  onClick={() => navigator.clipboard.writeText(pair.mintAddress)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigator.clipboard.writeText(pair.mintAddress)
+                  }}
                   className="hover:text-gray-300 transition-colors"
                   title="Copy mint address"
                 >
@@ -223,7 +241,10 @@ const TrendingPairCard: React.FC<TrendingPairCardProps> = ({ pair }) => {
                 {/* Twitter/X Link - prioritize URI metadata over WebSocket data */}
                 {(socialLinks.twitter || pair.social?.twitter) && (
                   <button
-                    onClick={() => window.open(socialLinks.twitter || pair.social?.twitter, '_blank')}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      window.open(socialLinks.twitter || pair.social?.twitter, '_blank')
+                    }}
                     className="hover:text-gray-300 transition-colors"
                     title="Twitter/X"
                   >
@@ -236,7 +257,10 @@ const TrendingPairCard: React.FC<TrendingPairCardProps> = ({ pair }) => {
                 {/* Website Link - prioritize URI metadata over WebSocket data */}
                 {(socialLinks.website || pair.social?.website) && (
                   <button
-                    onClick={() => window.open(socialLinks.website || pair.social?.website, '_blank')}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      window.open(socialLinks.website || pair.social?.website, '_blank')
+                    }}
                     className="hover:text-gray-300 transition-colors"
                     title="Website"
                   >
@@ -249,7 +273,9 @@ const TrendingPairCard: React.FC<TrendingPairCardProps> = ({ pair }) => {
             </div>
             
             {/* Top Right Stats */}
-            <div className="text-right flex-shrink-0 text-sm">
+            <div className="text-right flex-shrink-0 text-sm relative">
+              
+              
               <div className="text-green-400 text-xs" title="24h Volume">
                 V {formatVolume(pair.volume24h)}
               </div>

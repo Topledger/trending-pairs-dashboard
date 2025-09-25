@@ -9,7 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@types/protobufjs": "^6.0.0",
+    "kafkajs": "^2.2.4",
     "next": "15.5.3",
+    "protobufjs": "^7.5.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "ws": "^8.18.3"
