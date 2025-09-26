@@ -26,7 +26,23 @@ const EventsPage: React.FC = () => {
 
   const handleCopyMint = async (mintAddress: string) => {
     try {
-      await navigator.clipboard.writeText(mintAddress)
+      // Try modern clipboard API first (requires HTTPS)
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(mintAddress)
+      } else {
+        // Fallback for HTTP environments
+        const textArea = document.createElement('textarea')
+        textArea.value = mintAddress
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-999999px'
+        textArea.style.top = '-999999px'
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+      }
+      
       setCopiedMints(prev => new Set(prev).add(mintAddress))
       console.log('Copied mint address:', mintAddress)
       
@@ -45,7 +61,23 @@ const EventsPage: React.FC = () => {
 
   const handleCopyWallet = async (walletAddress: string, walletId: string) => {
     try {
-      await navigator.clipboard.writeText(walletAddress)
+      // Try modern clipboard API first (requires HTTPS)
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(walletAddress)
+      } else {
+        // Fallback for HTTP environments
+        const textArea = document.createElement('textarea')
+        textArea.value = walletAddress
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-999999px'
+        textArea.style.top = '-999999px'
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+      }
+      
       setCopiedWallets(prev => new Set(prev).add(walletId))
       console.log('Copied wallet address:', walletAddress)
       

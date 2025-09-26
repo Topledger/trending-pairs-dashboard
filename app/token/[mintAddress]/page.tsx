@@ -121,7 +121,23 @@ const TokenDetailPage: React.FC = () => {
 
   const handleCopyItem = async (text: string, itemId: string) => {
     try {
-      await navigator.clipboard.writeText(text)
+      // Try modern clipboard API first (requires HTTPS)
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text)
+      } else {
+        // Fallback for HTTP environments
+        const textArea = document.createElement('textarea')
+        textArea.value = text
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-999999px'
+        textArea.style.top = '-999999px'
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+      }
+      
       setCopiedItems(prev => new Set(prev).add(itemId))
       console.log('Copied:', text)
       

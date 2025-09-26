@@ -158,7 +158,23 @@ const TrendingPairCard: React.FC<TrendingPairCardProps> = ({ pair }) => {
   const handleCopyMint = async (e: React.MouseEvent) => {
     e.stopPropagation()
     try {
-      await navigator.clipboard.writeText(pair.mintAddress)
+      // Try modern clipboard API first (requires HTTPS)
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(pair.mintAddress)
+      } else {
+        // Fallback for HTTP environments
+        const textArea = document.createElement('textarea')
+        textArea.value = pair.mintAddress
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-999999px'
+        textArea.style.top = '-999999px'
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+      }
+      
       setCopiedMint(true)
       console.log('Copied mint address:', pair.mintAddress)
       
