@@ -28,6 +28,7 @@ const TokenDetailPage: React.FC = () => {
   const { events, isConnected, error, stats, connect, disconnect } = useKafkaConsumer()
   const { data: trendingPairs } = useWebSocket('ws://34.107.31.9/ws/trending-pairs', 'pump-fun')
   const [filter, setFilter] = useState<'all' | 'buy' | 'sell'>('all')
+  const [copiedItems, setCopiedItems] = useState<Set<string>>(new Set())
   
   // Get real-time token info from trending pairs (updates live)
   const liveTokenInfo = useMemo(() => {
@@ -118,6 +119,25 @@ const TokenDetailPage: React.FC = () => {
     }
   }
 
+  const handleCopyItem = async (text: string, itemId: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedItems(prev => new Set(prev).add(itemId))
+      console.log('Copied:', text)
+      
+      // Remove the item from copied set after 1 second
+      setTimeout(() => {
+        setCopiedItems(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(itemId)
+          return newSet
+        })
+      }, 1000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
+
   const getConnectionStatus = () => {
     if (isConnected) {
       return (
@@ -180,13 +200,23 @@ const TokenDetailPage: React.FC = () => {
                       {formatAddress(mintAddress)}
                     </button>
                     <button
-                      onClick={() => navigator.clipboard.writeText(mintAddress)}
-                      className="text-gray-500 hover:text-green-400 transition-colors"
+                      onClick={() => handleCopyItem(mintAddress, `mint-header-${mintAddress}`)}
+                      className={`transition-colors ${
+                        copiedItems.has(`mint-header-${mintAddress}`) 
+                          ? 'text-green-400' 
+                          : 'text-gray-500 hover:text-green-400'
+                      }`}
                       title="Copy mint address"
                     >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
+                      {copiedItems.has(`mint-header-${mintAddress}`) ? (
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      )}
                     </button>
                   </>
                 ) : (
@@ -457,13 +487,23 @@ const TokenDetailPage: React.FC = () => {
                         {/* Copy/Link icons */}
                         <div className="flex items-center gap-1 ml-1">
                           <button
-                            onClick={() => navigator.clipboard.writeText(event.walletAddress)}
-                            className="text-gray-500 hover:text-gray-300 transition-colors"
+                            onClick={() => handleCopyItem(event.walletAddress, `wallet-${event.walletAddress}-${event.timestamp}`)}
+                            className={`transition-colors ${
+                              copiedItems.has(`wallet-${event.walletAddress}-${event.timestamp}`) 
+                                ? 'text-green-400' 
+                                : 'text-gray-500 hover:text-gray-300'
+                            }`}
                             title="Copy wallet address"
                           >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
+                            {copiedItems.has(`wallet-${event.walletAddress}-${event.timestamp}`) ? (
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                            )}
                           </button>
                           <span className="text-gray-600 text-xs">1</span>
                           <button
@@ -569,13 +609,23 @@ const TokenDetailPage: React.FC = () => {
                       {formatAddress(mintAddress)}
                     </button>
                     <button
-                      onClick={() => navigator.clipboard.writeText(mintAddress)}
-                      className="text-gray-500 hover:text-green-400 transition-colors"
+                      onClick={() => handleCopyItem(mintAddress, `mint-sidebar-${mintAddress}`)}
+                      className={`transition-colors ${
+                        copiedItems.has(`mint-sidebar-${mintAddress}`) 
+                          ? 'text-green-400' 
+                          : 'text-gray-500 hover:text-green-400'
+                      }`}
                       title="Copy mint address"
                     >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
+                      {copiedItems.has(`mint-sidebar-${mintAddress}`) ? (
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      )}
                     </button>
                   </div>
                 </div>
