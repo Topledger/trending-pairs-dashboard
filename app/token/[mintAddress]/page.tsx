@@ -1,16 +1,38 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useKafkaConsumer } from '../../hooks/useKafkaConsumer'
+import { useWebSocket } from '../../hooks/useWebSocket'
 
 const TokenDetailPage: React.FC = () => {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const mintAddress = params.mintAddress as string
   
+  // Get token data from URL params (passed from trading pair card)
+  const tokenData = useMemo(() => {
+    const dataParam = searchParams.get('data')
+    if (dataParam) {
+      try {
+        return JSON.parse(dataParam)
+      } catch (e) {
+        console.error('Failed to parse token data:', e)
+        return null
+      }
+    }
+    return null
+  }, [searchParams])
+  
   const { events, isConnected, error, stats, connect, disconnect } = useKafkaConsumer()
+  const { data: trendingPairs } = useWebSocket('ws://34.107.31.9/ws/trending-pairs', 'pump-fun')
   const [filter, setFilter] = useState<'all' | 'buy' | 'sell'>('all')
+  
+  // Get real-time token info from trending pairs (updates live)
+  const liveTokenInfo = useMemo(() => {
+    return trendingPairs.find(pair => pair.mintAddress === mintAddress) || null
+  }, [trendingPairs, mintAddress])
   
 
   // Get last 50 events for this specific mint address (no type filter applied)
@@ -129,50 +151,48 @@ const TokenDetailPage: React.FC = () => {
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-800 text-gray-300 rounded-lg text-sm hover:bg-gray-700 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-gray-300 rounded-lg text-sm hover:bg-gray-900 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              Back to Trending
+              
             </button>
             <div>
-              <h1 className="text-3xl font-bold flex items-center gap-3">
-                {latestTokenInfo ? (
+              <h1 className="text-sm font-regular flex items-center gap-3">
+                {(liveTokenInfo || tokenData || latestTokenInfo) ? (
                   <>
-                    <span className="text-blue-400">{latestTokenInfo.baseMintSymbol}</span>
+                    <span className="text-blue-400 font-medium">
+                      {liveTokenInfo ? liveTokenInfo.symbol : 
+                       tokenData ? tokenData.symbol : 
+                       latestTokenInfo?.baseMintSymbol}
+                    </span>
                     <span className="text-gray-400">-</span>
-                    <span className="text-white">{latestTokenInfo.baseMintName}</span>
+                    <span className="text-gray-400">
+                      {liveTokenInfo ? liveTokenInfo.name : 
+                       tokenData ? tokenData.name : 
+                       latestTokenInfo?.baseMintName}
+                    </span>
+                    <button
+                      onClick={() => window.open(`https://solscan.io/token/${mintAddress}`, '_blank')}
+                      className="bg-gray-800 px-2 py-1 rounded text-xs text-gray-400 hover:text-blue-400 transition-colors"
+                    >
+                      {formatAddress(mintAddress)}
+                    </button>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(mintAddress)}
+                      className="text-gray-500 hover:text-green-400 transition-colors"
+                      title="Copy mint address"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
                   </>
                 ) : (
                   <span>Token Details</span>
                 )}
               </h1>
-              <div className="flex items-center gap-4 text-sm text-gray-400 mt-2">
-                <span className="flex items-center gap-2">
-                  <span>Mint:</span>
-                  <code className="bg-gray-800 px-2 py-1 rounded text-xs">{formatAddress(mintAddress)}</code>
-                </span>
-                <button
-                  onClick={() => window.open(`https://solscan.io/token/${mintAddress}`, '_blank')}
-                  className="flex items-center gap-1 hover:text-blue-400 transition-colors"
-                >
-                  <span>View on Solscan</span>
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => navigator.clipboard.writeText(mintAddress)}
-                  className="flex items-center gap-1 hover:text-green-400 transition-colors"
-                  title="Copy mint address"
-                >
-                  <span>Copy Address</span>
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </button>
-              </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -201,60 +221,6 @@ const TokenDetailPage: React.FC = () => {
 
        
 
-        {/* Navigation Tabs */}
-        <div className="border-b border-gray-800 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex">
-              <button
-                onClick={() => setFilter('all')}
-                className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  filter === 'all' 
-                    ? 'border-white text-white' 
-                    : 'border-transparent text-gray-400 hover:text-gray-300'
-                }`}
-              >
-                All ({tokenStats.totalTrades})
-              </button>
-              <button
-                onClick={() => setFilter('buy')}
-                className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  filter === 'buy' 
-                    ? 'border-green-400 text-green-400' 
-                    : 'border-transparent text-gray-400 hover:text-gray-300'
-                }`}
-              >
-                Buys ({tokenStats.buyTrades})
-              </button>
-              <button
-                onClick={() => setFilter('sell')}
-                className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  filter === 'sell' 
-                    ? 'border-red-400 text-red-400' 
-                    : 'border-transparent text-gray-400 hover:text-gray-300'
-                }`}
-              >
-                Sells ({tokenStats.sellTrades})
-              </button>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              {latestTokenInfo && (
-                <div className="flex items-center gap-4 text-sm">
-                  <span className="text-gray-400">Platform:</span>
-                  <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs font-medium">
-                    {latestTokenInfo.platform.toUpperCase()}
-                  </span>
-                  <span className="text-gray-400">Current Price:</span>
-                  <span className="text-white font-medium">
-                    ${parseFloat(latestTokenInfo.priceUsd || '0').toFixed(6)}
-                  </span>
-                </div>
-              )}
-              
-             
-            </div>
-          </div>
-        </div>
 
 
         {/* Error State */}
@@ -265,8 +231,113 @@ const TokenDetailPage: React.FC = () => {
           </div>
         )}
 
-        {/* Trading Feed Table */}
-        <div className="bg-gray-950 rounded-lg overflow-hidden">
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left Side - Chart and Feeds (3/4 width) */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Price Chart - Top Half */}
+            <div className="bg-gray-950 rounded-lg p-6">
+              <h3 className="text-sm font-medium text-gray-300 mb-4">Price Chart</h3>
+              <div className="h-64 flex items-center justify-center">
+                <div className="relative w-full h-full">
+                  {/* Simple Line Chart */}
+                  <svg className="w-full h-full" viewBox="0 0 300 200">
+                    {/* Chart Background */}
+                    <defs>
+                      <linearGradient id="priceGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="rgba(34, 197, 94, 0.3)" />
+                        <stop offset="100%" stopColor="rgba(34, 197, 94, 0.0)" />
+                      </linearGradient>
+                    </defs>
+                    
+                    {/* Generate simple price line based on events */}
+                    {allTokenEvents.length > 1 && (
+                      <>
+                        {/* Price area fill */}
+                        <path
+                          d={`M 0 200 ${allTokenEvents.slice(-20).map((event, index) => {
+                            const x = (index / 19) * 300
+                            const price = parseFloat(event.priceUsd || '0')
+                            const maxPrice = Math.max(...allTokenEvents.slice(-20).map(e => parseFloat(e.priceUsd || '0')))
+                            const minPrice = Math.min(...allTokenEvents.slice(-20).map(e => parseFloat(e.priceUsd || '0')))
+                            const y = 180 - ((price - minPrice) / (maxPrice - minPrice || 1)) * 160
+                            return `L ${x} ${y}`
+                          }).join(' ')} L 300 200 Z`}
+                          fill="url(#priceGradient)"
+                        />
+                        {/* Price line */}
+                        <path
+                          d={`M ${allTokenEvents.slice(-20).map((event, index) => {
+                            const x = (index / 19) * 300
+                            const price = parseFloat(event.priceUsd || '0')
+                            const maxPrice = Math.max(...allTokenEvents.slice(-20).map(e => parseFloat(e.priceUsd || '0')))
+                            const minPrice = Math.min(...allTokenEvents.slice(-20).map(e => parseFloat(e.priceUsd || '0')))
+                            const y = 180 - ((price - minPrice) / (maxPrice - minPrice || 1)) * 160
+                            return `${index === 0 ? '' : 'L '}${x} ${y}`
+                          }).join(' ')}`}
+                          stroke="#22c55e"
+                          strokeWidth="2"
+                          fill="none"
+                        />
+                      </>
+                    )}
+                    
+                    {/* No data state */}
+                    {allTokenEvents.length <= 1 && (
+                      <text x="150" y="100" textAnchor="middle" className="fill-gray-400 text-sm">
+                        No price data available
+                      </text>
+                    )}
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Trading Feed - Bottom Half */}
+            <div className="bg-gray-950 rounded-lg overflow-hidden">
+              {/* Navigation Tabs */}
+              <div className="border-b border-gray-800">
+                <div className="flex items-center justify-between">
+                  <div className="flex">
+                    <button
+                      onClick={() => setFilter('all')}
+                      className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                        filter === 'all' 
+                          ? 'border-white text-white' 
+                          : 'border-transparent text-gray-400 hover:text-gray-300'
+                      }`}
+                    >
+                      All ({tokenStats.totalTrades})
+                    </button>
+                    <button
+                      onClick={() => setFilter('buy')}
+                      className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                        filter === 'buy' 
+                          ? 'border-green-400 text-green-400' 
+                          : 'border-transparent text-gray-400 hover:text-gray-300'
+                      }`}
+                    >
+                      Buys ({tokenStats.buyTrades})
+                    </button>
+                    <button
+                      onClick={() => setFilter('sell')}
+                      className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                        filter === 'sell' 
+                          ? 'border-red-400 text-red-400' 
+                          : 'border-transparent text-gray-400 hover:text-gray-300'
+                      }`}
+                    >
+                      Sells ({tokenStats.sellTrades})
+                    </button>
+                  </div>
+                  
+                  <div className="flex items-center gap-4 pr-4">
+                    <div className="text-sm text-gray-400">
+                      Live Trading Feed
+                    </div>
+                  </div>
+                </div>
+              </div>
           {/* Table Header */}
           <div className="border-b border-gray-800 bg-gray-900/50">
             <div className="grid grid-cols-6 gap-4 px-6 py-3 text-sm font-medium text-gray-400">
@@ -437,6 +508,197 @@ const TokenDetailPage: React.FC = () => {
               </div>
             </div>
           )}
+            </div>
+          </div>
+
+          {/* Right Side - Token Info Card */}
+          <div className="lg:col-span-1">
+            <div className="bg-gray-950 rounded-lg p-6 sticky top-6">
+              <div className="space-y-4">
+                {/* Token Header */}
+                <div className="flex items-center gap-3">
+                  {/* Token Image Placeholder */}
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg overflow-hidden">
+                    {(liveTokenInfo?.image || tokenData?.image) ? (
+                      <img 
+                        src={liveTokenInfo?.image || tokenData?.image} 
+                        alt={liveTokenInfo?.symbol || tokenData?.symbol} 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.currentTarget
+                          target.style.display = 'none'
+                          const parent = target.parentElement
+                          if (parent) {
+                            parent.innerHTML = `<span class="text-xl font-bold">${(liveTokenInfo?.symbol || tokenData?.symbol || latestTokenInfo?.baseMintSymbol || mintAddress).charAt(0).toUpperCase()}</span>`
+                          }
+                        }}
+                      />
+                    ) : (
+                      <span className="text-xl font-bold">
+                        {liveTokenInfo ? liveTokenInfo.symbol.charAt(0).toUpperCase() : 
+                         tokenData ? tokenData.symbol.charAt(0).toUpperCase() : 
+                         latestTokenInfo ? latestTokenInfo.baseMintSymbol.charAt(0) : 
+                         mintAddress.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-white font-medium">
+                      {liveTokenInfo ? liveTokenInfo.symbol : 
+                       tokenData ? tokenData.symbol : 
+                       latestTokenInfo ? latestTokenInfo.baseMintSymbol : 
+                       'Unknown Token'}
+                    </h3>
+                    <p className="text-gray-400 text-sm">
+                      {liveTokenInfo ? liveTokenInfo.name : 
+                       tokenData ? tokenData.name : 
+                       latestTokenInfo ? latestTokenInfo.baseMintName : 
+                       'Token Details'}
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Mint Address */}
+                <div className="border-t border-gray-800 pt-4">
+                  <div className="text-gray-400 text-sm mb-2">Mint Address</div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => window.open(`https://solscan.io/token/${mintAddress}`, '_blank')}
+                      className="bg-gray-800 px-2 py-1 rounded text-xs text-gray-300 hover:text-blue-400 transition-colors"
+                    >
+                      {formatAddress(mintAddress)}
+                    </button>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(mintAddress)}
+                      className="text-gray-500 hover:text-green-400 transition-colors"
+                      title="Copy mint address"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                
+                {(liveTokenInfo || tokenData || latestTokenInfo) ? (
+                  <>
+                    {/* Price */}
+                    <div className="border-t border-gray-800 pt-4">
+                      <div className="text-gray-400 text-sm mb-1">Current Price</div>
+                      <div className="text-white text-xl font-bold">
+                        ${liveTokenInfo ? liveTokenInfo.price.toFixed(6) : 
+                          tokenData ? tokenData.price.toFixed(6) : 
+                          parseFloat(latestTokenInfo?.priceUsd || '0').toFixed(6)}
+                      </div>
+                    </div>
+                    
+                    {/* Stats */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400 text-sm">Market Cap</span>
+                        <span className="text-white font-medium text-sm">
+                          ${liveTokenInfo ? formatMarketCap(liveTokenInfo.marketCap) : 
+                            tokenData ? formatMarketCap(tokenData.marketCap) : 
+                            formatMarketCap(parseFloat(latestTokenInfo?.priceUsd || '0') * (latestTokenInfo?.currentSupply || 1000000000))}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400 text-sm">Volume 24h</span>
+                        <span className="text-white font-medium text-sm">
+                          ${liveTokenInfo ? formatVolume(liveTokenInfo.volume24h) : 
+                            tokenData ? formatVolume(tokenData.volume24h) : 
+                            formatVolume(tokenStats.totalVolume)}
+                        </span>
+                      </div>
+                      
+                      {/* Show rich metrics from trending pairs if available */}
+                      {(liveTokenInfo?.metrics || tokenData?.metrics) ? (
+                        <>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400 text-sm">Holders</span>
+                            <span className="text-white font-medium text-sm">
+                              {(liveTokenInfo?.metrics?.holders || tokenData?.metrics?.holders || 0)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400 text-sm">Dev Holdings</span>
+                            <span className="text-white font-medium text-sm">
+                              {((liveTokenInfo?.metrics?.devHoldingPct || tokenData?.metrics?.devHoldingPct || 0).toFixed(0))}%
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400 text-sm">Bonding Curve</span>
+                            <span className="text-white font-medium text-sm">
+                              {((liveTokenInfo?.metrics?.bondingCurvePct || tokenData?.metrics?.bondingCurvePct || 0).toFixed(1))}%
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400 text-sm">Sniper %</span>
+                            <span className="text-white font-medium text-sm">
+                              {((liveTokenInfo?.metrics?.sniperWalletsPct || tokenData?.metrics?.sniperWalletsPct || 0).toFixed(0))}%
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400 text-sm">Total Trades</span>
+                            <span className="text-white font-medium text-sm">
+                              {tokenStats.totalTrades}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400 text-sm">Buys / Sells</span>
+                            <span className="text-white font-medium text-sm">
+                              <span className="text-green-400">{tokenStats.buyTrades}</span> / <span className="text-red-400">{tokenStats.sellTrades}</span>
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* Platform Badge */}
+                    <div className="border-t border-gray-800 pt-4">
+                      <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-medium">
+                        {latestTokenInfo ? latestTokenInfo.platform.toUpperCase() : 'PUMP.FUN'}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* No Data State */}
+                    <div className="border-t border-gray-800 pt-4">
+                      <div className="text-center py-6">
+                        <div className="text-gray-400 text-sm mb-2">No trading data available</div>
+                        <div className="text-gray-500 text-xs">
+                          {isConnected 
+                            ? 'Waiting for first trade to load token information...' 
+                            : 'Connect to start receiving live events'
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Basic Stats - Even without trades */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400 text-sm">Status</span>
+                        <span className="text-white font-medium text-sm">
+                          {isConnected ? 'Monitoring' : 'Offline'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400 text-sm">Total Events</span>
+                        <span className="text-white font-medium text-sm">
+                          {events.length}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

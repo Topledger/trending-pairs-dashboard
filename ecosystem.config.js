@@ -21,6 +21,25 @@ module.exports = {
       out_file: './logs/out.log',
       log_file: './logs/combined.log',
       time: true
+    },
+    {
+      name: 'kafka-ws-server',
+      script: 'kafka-ws-server.js',
+      cwd: '/root/trending-pairs-dashboard',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production'
+      },
+      env_production: {
+        NODE_ENV: 'production'
+      },
+      error_file: './logs/kafka-ws-err.log',
+      out_file: './logs/kafka-ws-out.log',
+      log_file: './logs/kafka-ws-combined.log',
+      time: true
     }
   ]
 };

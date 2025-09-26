@@ -107,7 +107,7 @@ async function startKafkaConsumer() {
 
 // Create WebSocket server
 const wss = new WebSocket.Server({ 
-  port: 8080,
+  port: 8082,
   perMessageDeflate: false
 })
 
@@ -129,7 +129,7 @@ wss.on('connection', (ws) => {
   })
 })
 
-console.log('🚀 WebSocket server started on port 8080')
+console.log('🚀 WebSocket server started on port 8082')
 
 // Initialize and start
 async function start() {

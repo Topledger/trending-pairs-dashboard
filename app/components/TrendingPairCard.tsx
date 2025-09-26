@@ -17,8 +17,23 @@ const TrendingPairCard: React.FC<TrendingPairCardProps> = ({ pair }) => {
   const { imageUrl, loading, socialLinks } = useImageFromUri(pair.uri, pair.image)
   
   const handleCardClick = () => {
-    // Navigate to token detail page
-    router.push(`/token/${pair.mintAddress}`)
+    // Navigate to token detail page with token data
+    const tokenData = {
+      symbol: pair.symbol,
+      name: pair.name,
+      price: pair.price,
+      marketCap: pair.marketCap,
+      volume24h: pair.volume24h,
+      image: imageUrl,
+      metrics: pair.metrics
+    }
+    
+    // Encode token data as URL search params
+    const searchParams = new URLSearchParams({
+      data: JSON.stringify(tokenData)
+    })
+    
+    router.push(`/token/${pair.mintAddress}?${searchParams.toString()}`)
   }
 
   // Get bonding curve percentage

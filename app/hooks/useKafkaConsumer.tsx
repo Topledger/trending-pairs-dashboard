@@ -61,8 +61,10 @@ export const useKafkaConsumer = () => {
     disconnect()
     setError(null)
     
-    // Connect to our WebSocket server
-    const ws = new WebSocket('ws://localhost:8080')
+    // Connect to our WebSocket server - use the same host as the web app
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const host = window.location.hostname
+    const ws = new WebSocket(`${protocol}//${host}:8082`)
     eventSourceRef.current = ws
 
     ws.onopen = () => {
