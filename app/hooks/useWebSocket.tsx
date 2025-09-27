@@ -169,15 +169,17 @@ const processRawPair = (rawData: Record<string, unknown>): TrendingPair => {
   
   if (rawData.category) {
     // Use the category field directly from WebSocket message
-    const category = String(rawData.category).toLowerCase()
-    if (category === 'new') status = 'New'
-    else if (category === 'migrating') status = 'Migrating' 
-    else if (category === 'migrated') status = 'Migrated'
+    const category = String(rawData.category).toUpperCase()
+    if (category === 'NEW') status = 'New'
+    else if (category === 'MIGRATING') status = 'Migrating' 
+    else if (category === 'MIGRATED') status = 'Migrated'
   } else {
     // Fallback to migration fields
     if (rawData.is_migrated === true) {
       status = 'Migrated'
     } else if (rawData.migration_timestamp && Number(rawData.migration_timestamp) > 0) {
+      status = 'Migrating'
+    } else if (rawData.bonding_curve_pct && parseFloat(String(rawData.bonding_curve_pct)) >= 25) {
       status = 'Migrating'
     }
   }
@@ -185,7 +187,7 @@ const processRawPair = (rawData: Record<string, unknown>): TrendingPair => {
   return {
     symbol,
     name,
-    mintAddress: String(rawData.mint || rawData.mint_address || symbol),
+    mintAddress: String(rawData.mint || rawData.mint_address || `${symbol}-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`),
     uri: rawData.uri ? String(rawData.uri) : undefined,
     price,
     marketCap,
@@ -255,8 +257,35 @@ export const useWebSocket = (url: string, selectedDex: 'pump-fun' | 'meteora-dbc
         try {
           const message = JSON.parse(event.data)
           
+          // Handle initial_snapshot messages (for MIGRATING and MIGRATED categories)
+          if (message.type === 'initial_snapshot' && message.tokens && Array.isArray(message.tokens)) {
+            console.log(`📸 Initial snapshot received: ${message.category} category with ${message.tokens.length} tokens`)
+            
+            const processedData = message.tokens.map((token: Record<string, unknown>) => {
+              // Add category information to token for proper processing
+              const enhancedToken = { ...token, category: message.category }
+              return processRawPair(enhancedToken)
+            }).sort((a: TrendingPair, b: TrendingPair) => b.creationTimestamp - a.creationTimestamp)
+            
+            // For initial snapshots, we want to show these immediately
+            setData(prevData => {
+              // Merge with existing data, avoiding duplicates based on mintAddress
+              const existingMints = new Set(prevData.map((pair: TrendingPair) => pair.mintAddress))
+              const newTokens = processedData.filter((pair: TrendingPair) => !existingMints.has(pair.mintAddress))
+              
+              // Combine and sort by creation timestamp (newest first)
+              return [...newTokens, ...prevData]
+                .sort((a: TrendingPair, b: TrendingPair) => b.creationTimestamp - a.creationTimestamp)
+                .slice(0, 100) // Keep only top 100 to prevent memory issues
+            })
+          }
+          // Handle subscription_confirmed messages
+          else if (message.type === 'subscription_confirmed') {
+            console.log(`✅ Subscription confirmed for DEX: ${message.dex}, Categories: ${message.categories?.join(', ')}`)
+            console.log('ℹ️  Note: Initial snapshots only sent when MIGRATING/MIGRATED categories have data')
+          }
           // Handle category_update messages with changed_fields
-          if (message.type === 'category_update' && message.data && message.changed_fields) {
+          else if (message.type === 'category_update' && message.data && message.changed_fields) {
             const action = message.action || 'add'
             const tokenData = message.data
             const changedFields = message.changed_fields

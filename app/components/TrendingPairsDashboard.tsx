@@ -150,7 +150,7 @@ const TrendingPairsDashboard: React.FC = () => {
           <div className="grid grid-cols-3 gap-4">
             {filteredData.map((pair, index) => (
               <TrendingPairCard
-                key={`${pair.symbol}-${pair.creationTimestamp}`}
+                key={pair.mintAddress}
                 pair={pair}
                 rank={index + 1}
               />
