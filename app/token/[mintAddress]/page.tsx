@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useKafkaConsumer } from '../../hooks/useKafkaConsumer'
 import { useWebSocket } from '../../hooks/useWebSocket'
 import { useTopTradersWebSocket } from '../../hooks/useTopTradersWebSocket'
+import { useTopHoldersWebSocket } from '../../hooks/useTopHoldersWebSocket'
 
 const TokenDetailPage: React.FC = () => {
   const params = useParams()
@@ -29,8 +30,9 @@ const TokenDetailPage: React.FC = () => {
   const { events, isConnected, error, stats, connect, disconnect } = useKafkaConsumer()
   const { data: trendingPairs } = useWebSocket('ws://34.107.31.9/ws/trending-pairs', 'pump-fun')
   const { traders: topTraders, isConnected: tradersConnected, error: tradersError, subscribe: subscribeToTraders, reconnect: reconnectTraders } = useTopTradersWebSocket()
+  const { holders: topHolders, isConnected: holdersConnected, error: holdersError, subscribe: subscribeToHolders, reconnect: reconnectHolders } = useTopHoldersWebSocket()
   
-  const [filter, setFilter] = useState<'all' | 'buy' | 'sell' | 'traders'>('all')
+  const [filter, setFilter] = useState<'all' | 'buy' | 'sell' | 'traders' | 'holders'>('all')
   const [copiedItems, setCopiedItems] = useState<Set<string>>(new Set())
   
   // Get real-time token info from trending pairs (updates live)
@@ -44,6 +46,13 @@ const TokenDetailPage: React.FC = () => {
       subscribeToTraders(mintAddress)
     }
   }, [mintAddress, tradersConnected, subscribeToTraders])
+
+  // Subscribe to top holders when mint address is available
+  useEffect(() => {
+    if (mintAddress && holdersConnected) {
+      subscribeToHolders(mintAddress)
+    }
+  }, [mintAddress, holdersConnected, subscribeToHolders])
   
 
   // Get last 50 events for this specific mint address (no type filter applied)
@@ -394,6 +403,16 @@ const TokenDetailPage: React.FC = () => {
                     >
                       Top Traders ({topTraders.length})
                     </button>
+                    <button
+                      onClick={() => setFilter('holders')}
+                      className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                        filter === 'holders' 
+                          ? 'border-orange-400 text-orange-400' 
+                          : 'border-transparent text-gray-400 hover:text-gray-300'
+                      }`}
+                    >
+                      Top Holders ({topHolders.length})
+                    </button>
                   </div>
                   
                   <div className="flex items-center gap-4 pr-4">
@@ -403,80 +422,158 @@ const TokenDetailPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-          {/* Table Header */}
-          <div className="border-b border-gray-800 bg-gray-900/50">
-            {filter === 'traders' ? (
-              <div className="grid grid-cols-5 gap-4 px-6 py-3 text-sm font-medium text-gray-400">
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                  </svg>
-                  Rank
-                </div>
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  Trader
-                </div>
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  Trades
-                </div>
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                  </svg>
-                  PnL
-                </div>
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
-                  Volume
-                </div>
+          {/* Scrollable Table Container */}
+          <div className="overflow-x-auto">
+            <div className="min-w-max">
+              {/* Table Header */}
+              <div className="border-b border-gray-800 bg-gray-900/50">
+                {filter === 'traders' ? (
+                  <div className="grid grid-cols-5 gap-4 px-6 py-3 text-sm font-medium text-gray-400">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                      </svg>
+                      Rank
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      Trader
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      Trades
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      </svg>
+                      PnL
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                      Volume
+                    </div>
+                  </div>
+                ) : filter === 'holders' ? (
+                  <div className="min-w-[1800px] grid grid-cols-12 gap-3 px-6 py-3 text-sm font-medium text-gray-400">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                        </svg>
+                        Rank
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Holder
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                        Token Balance
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                        </svg>
+                        Value USD
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        % Supply
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                        Unrealized PnL
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                        </svg>
+                        Realized PnL
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Trading Stats
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                        </svg>
+                        Bought/Sold
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Activity
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                        Transfers
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                        </svg>
+                        SOL Balance
+                      </div>
+                    </div>
+                ) : (
+                  <div className="grid grid-cols-6 gap-4 px-6 py-3 text-sm font-medium text-gray-400">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Age
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                      </svg>
+                      Type
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      </svg>
+                      MC
+                    </div>
+                    <div>Amount</div>
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      </svg>
+                      Total USD
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      Trader
+                    </div>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="grid grid-cols-6 gap-4 px-6 py-3 text-sm font-medium text-gray-400">
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Age
-                </div>
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                  </svg>
-                  Type
-                </div>
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                  </svg>
-                  MC
-                </div>
-                <div>Amount</div>
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                  </svg>
-                  Total USD
-                </div>
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  Trader
-                </div>
-              </div>
-            )}
-          </div>
 
-          {/* Table Body */}
-          <div className="max-h-[600px] overflow-y-auto">
+              {/* Table Body */}
+              <div className="max-h-[600px] overflow-y-auto">
             {filter === 'traders' ? (
               // Top Traders Tab Content
               topTraders.length === 0 ? (
@@ -562,6 +659,189 @@ const TokenDetailPage: React.FC = () => {
                     </div>
                   </div>
                 ))
+              )
+            ) : filter === 'holders' ? (
+              // Top Holders Tab Content
+              topHolders.length === 0 ? (
+                <div className="text-center py-20">
+                  <div className="text-gray-400 text-lg mb-2">
+                    {holdersConnected ? 'No holder data available' : 'Connecting to holders feed...'}
+                  </div>
+                  <div className="text-gray-500 text-sm mb-6">
+                    {holdersConnected 
+                      ? 'Waiting for holder activity...' 
+                      : 'Loading top holders data'
+                    }
+                  </div>
+                  <div className="text-gray-600 text-xs">
+                    Status: {holdersConnected ? 'Connected' : 'Connecting'} | Holders: {topHolders.length}
+                  </div>
+                </div>
+              ) : (
+                <div className="min-w-[1800px]">
+                  {topHolders.slice(0, 50).map((holder, index) => {
+                    const timeAgo = (timestamp: number | undefined) => {
+                      if (!timestamp) return 'N/A'
+                      const diff = Date.now() - (timestamp * 1000)
+                      const minutes = Math.floor(diff / 60000)
+                      const hours = Math.floor(minutes / 60)
+                      const days = Math.floor(hours / 24)
+                      
+                      if (days > 0) return `${days}d ago`
+                      if (hours > 0) return `${hours}h ago`
+                      if (minutes > 0) return `${minutes}m ago`
+                      return 'Just now'
+                    }
+                    
+                    return (
+                      <div 
+                        key={holder.wallet_address || `holder-${index}`}
+                        className="grid grid-cols-12 gap-3 px-6 py-4 border-b border-gray-800/50 hover:bg-gray-900/30 transition-colors"
+                      >
+                        {/* Rank */}
+                        <div className="flex items-center justify-center w-8 h-8 bg-gray-700 rounded-full text-sm font-medium text-gray-300">
+                          {(holder.holder_rank as number) || index + 1}
+                        </div>
+
+                        {/* Holder */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">💰</span>
+                          <button
+                            onClick={() => window.open(`https://solscan.io/account/${holder.wallet_address}`, '_blank')}
+                            className="text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium"
+                          >
+                            {formatAddress(holder.wallet_address)}
+                          </button>
+                          <button
+                            onClick={() => handleCopyItem(holder.wallet_address, `holder-${holder.wallet_address}`)}
+                            className={`transition-colors ${
+                              copiedItems.has(`holder-${holder.wallet_address}`) 
+                                ? 'text-green-400' 
+                                : 'text-gray-500 hover:text-green-400'
+                            }`}
+                            title="Copy wallet address"
+                          >
+                            {copiedItems.has(`holder-${holder.wallet_address}`) ? (
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Token Balance */}
+                        <div className="text-white text-sm">
+                          {formatTokenAmount((holder.current_token_balance as number) || 0)}
+                          <div className="text-xs text-gray-500">
+                            tokens
+                          </div>
+                        </div>
+
+                        {/* Value USD */}
+                        <div className="text-white text-sm">
+                          {formatVolume((holder.token_balance_usd as number) || 0)}
+                          <div className="text-xs text-gray-500">
+                            current value
+                          </div>
+                        </div>
+
+                        {/* % Supply */}
+                        <div className="text-orange-400 text-sm font-medium">
+                          {(((holder.percentage_of_supply as number) || 0)).toFixed(2)}%
+                          <div className="text-xs text-gray-500">
+                            of supply
+                          </div>
+                        </div>
+
+                        {/* Unrealized PnL */}
+                        <div className={`text-sm font-medium ${
+                          ((holder.unrealized_pnl_usd as number) || 0) >= 0 ? 'text-green-400' : 'text-red-400'
+                        }`}>
+                          {holder.unrealized_pnl_usd ? (
+                            <>
+                              {((holder.unrealized_pnl_usd as number) >= 0) ? '+' : ''}{formatVolume(Math.abs(holder.unrealized_pnl_usd as number))}
+                              <div className="text-xs text-gray-500">
+                                {holder.unrealized_pnl_pct ? `${((holder.unrealized_pnl_pct as number) >= 0) ? '+' : ''}${(holder.unrealized_pnl_pct as number).toFixed(1)}%` : 'N/A'}
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              N/A
+                              <div className="text-xs text-gray-500">unrealized</div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Realized PnL */}
+                        <div className={`text-sm font-medium ${
+                          ((holder.realized_pnl_usd as number) || 0) >= 0 ? 'text-green-400' : 'text-red-400'
+                        }`}>
+                          {holder.realized_pnl_usd ? (
+                            <>
+                              {((holder.realized_pnl_usd as number) >= 0) ? '+' : ''}{formatVolume(Math.abs(holder.realized_pnl_usd as number))}
+                              <div className="text-xs text-gray-500">
+                                {holder.realized_pnl_pct ? `${((holder.realized_pnl_pct as number) >= 0) ? '+' : ''}${(holder.realized_pnl_pct as number).toFixed(1)}%` : 'N/A'}
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              N/A
+                              <div className="text-xs text-gray-500">realized</div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Trading Stats */}
+                        <div className="text-white text-sm">
+                          {((holder.buy_count as number) || 0) + ((holder.sell_count as number) || 0)} trades
+                          <div className="text-xs text-gray-500">
+                            <span className="text-green-400">{(holder.buy_count as number) || 0}B</span> / <span className="text-red-400">{(holder.sell_count as number) || 0}S</span>
+                          </div>
+                        </div>
+
+                        {/* Bought/Sold */}
+                        <div className="text-white text-sm">
+                          <div className="text-xs text-green-400">
+                            Bought: {formatVolume((holder.bought_usd as number) || 0)}
+                          </div>
+                          <div className="text-xs text-red-400">
+                            Sold: {formatVolume((holder.sold_usd as number) || 0)}
+                          </div>
+                        </div>
+
+                        {/* Activity */}
+                        <div className="text-gray-300 text-sm">
+                          <div className="text-xs text-gray-500 mb-1">
+                            Last: {timeAgo(holder.last_activity_timestamp as number)}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            First: {timeAgo(holder.first_buy_timestamp as number)}
+                          </div>
+                        </div>
+
+                        {/* Transfers */}
+                        <div className="text-white text-sm">
+                          {formatTokenAmount((holder.transferred_amount as number) || 0)}
+                          <div className="text-xs text-gray-500">
+                            transferred
+                          </div>
+                        </div>
+
+                        {/* SOL Balance */}
+                        <div className="text-purple-400 text-sm">
+                          {holder.current_sol_balance ? (holder.current_sol_balance as number).toFixed(4) : '0'} SOL
+                          <div className="text-xs text-gray-500">
+                            current balance
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               )
             ) : (
               // Trading Events Tab Content
@@ -680,14 +960,18 @@ const TokenDetailPage: React.FC = () => {
               )
             )}
           </div>
+            </div>
+          </div>
 
           {/* Table Footer with Live Indicator */}
-          {((filter === 'traders' && topTraders.length > 0) || (filter !== 'traders' && filteredTokenEvents.length > 0)) && (
+          {((filter === 'traders' && topTraders.length > 0) || (filter === 'holders' && topHolders.length > 0) || (filter !== 'traders' && filter !== 'holders' && filteredTokenEvents.length > 0)) && (
             <div className="border-t border-gray-800 bg-gray-900/50 px-6 py-3">
               <div className="flex items-center justify-between text-sm text-gray-400">
                 <span>
                   {filter === 'traders' ? (
                     `Showing ${Math.min(topTraders.length, 50)} of ${topTraders.length} top trader${topTraders.length !== 1 ? 's' : ''}`
+                  ) : filter === 'holders' ? (
+                    `Showing ${Math.min(topHolders.length, 50)} of ${topHolders.length} top holder${topHolders.length !== 1 ? 's' : ''}`
                   ) : (
                     `Showing ${filteredTokenEvents.length} of last 50 trade${filteredTokenEvents.length !== 1 ? 's' : ''}`
                   )}
@@ -695,11 +979,25 @@ const TokenDetailPage: React.FC = () => {
                 <div className="flex items-center gap-4">
                   {filter === 'traders' ? (
                     <span className="text-xs">Total traders found: {topTraders.length}</span>
+                  ) : filter === 'holders' ? (
+                    <span className="text-xs">Total holders found: {topHolders.length}</span>
                   ) : (
                     <span className="text-xs">Total global events: {events.length}</span>
                   )}
                   {filter === 'traders' ? (
                     tradersConnected ? (
+                      <div className="flex items-center gap-2 bg-green-500/20 px-2 py-1 rounded">
+                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <span className="text-xs text-green-400 font-medium">Live</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 bg-yellow-500/20 px-2 py-1 rounded">
+                        <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                        <span className="text-xs text-yellow-400 font-medium">⏸ Connecting</span>
+                      </div>
+                    )
+                  ) : filter === 'holders' ? (
+                    holdersConnected ? (
                       <div className="flex items-center gap-2 bg-green-500/20 px-2 py-1 rounded">
                         <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                         <span className="text-xs text-green-400 font-medium">Live</span>
