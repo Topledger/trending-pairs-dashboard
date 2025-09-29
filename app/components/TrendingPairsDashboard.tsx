@@ -5,7 +5,7 @@ import { useWebSocket } from '../hooks/useWebSocket'
 import TrendingPairCard from './TrendingPairCard'
 
 const TrendingPairsDashboard: React.FC = () => {
-  const [selectedDex, setSelectedDex] = useState<'pump-fun' | 'meteora-dbc'>('pump-fun')
+  const [selectedDex, setSelectedDex] = useState<'pump-fun' | 'meteora-dbc' | 'raydium-launchlab'>('pump-fun')
   const { data, isConnected, error, reconnect } = useWebSocket('ws://34.107.31.9/ws/trending-pairs', selectedDex)
   const [selectedFilter, setSelectedFilter] = useState<'New' | 'Migrating' | 'Migrated'>('New')
 
@@ -90,11 +90,12 @@ const TrendingPairsDashboard: React.FC = () => {
               <div className="flex items-center gap-4 pr-2">
                 <select
                   value={selectedDex}
-                  onChange={(e) => setSelectedDex(e.target.value as 'pump-fun' | 'meteora-dbc')}
+                  onChange={(e) => setSelectedDex(e.target.value as 'pump-fun' | 'meteora-dbc' | 'raydium-launchlab')}
                   className=" border border-gray-800 rounded px-3 py-1 text-sm text-gray-400 outline-none"
                 >
                   <option value="pump-fun">Pump Fun</option>
                   <option value="meteora-dbc">Meteora DBC</option>
+                  <option value="raydium-launchlab">Raydium LaunchLab</option>
                 </select>
                 
                

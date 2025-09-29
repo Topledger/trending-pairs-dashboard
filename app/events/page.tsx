@@ -440,7 +440,7 @@ const EventsPage: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1">
                         {/* Trader emoji/icon */}
-                        <span className="text-sm">🧑‍💻</span>
+                       
                         <button
                           onClick={() => window.open(`https://solscan.io/account/${event.walletAddress}`, '_blank')}
                           className="text-sm text-gray-300 hover:text-blue-400 transition-colors"

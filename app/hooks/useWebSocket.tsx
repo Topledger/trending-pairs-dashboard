@@ -218,7 +218,7 @@ const processRawPair = (rawData: Record<string, unknown>): TrendingPair => {
   }
 }
 
-export const useWebSocket = (url: string, selectedDex: 'pump-fun' | 'meteora-dbc' = 'pump-fun'): UseWebSocketReturn => {
+export const useWebSocket = (url: string, selectedDex: 'pump-fun' | 'meteora-dbc' | 'raydium-launchlab' = 'pump-fun'): UseWebSocketReturn => {
   const [data, setData] = useState<TrendingPair[]>([])
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
