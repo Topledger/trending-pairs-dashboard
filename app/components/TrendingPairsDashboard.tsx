@@ -3,7 +3,6 @@
 import React, { useState, useMemo } from 'react'
 import { useWebSocket } from '../hooks/useWebSocket'
 import TrendingPairCard from './TrendingPairCard'
-import StatusFilter from './StatusFilter'
 
 const TrendingPairsDashboard: React.FC = () => {
   const [selectedDex, setSelectedDex] = useState<'pump-fun' | 'meteora-dbc'>('pump-fun')
@@ -63,35 +62,70 @@ const TrendingPairsDashboard: React.FC = () => {
     <div className="min-h-screen bg-gray-950 text-white">
       <div className="max-w-none mx-auto px-12 py-6">
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-4">
-                <h1 className="text-2xl font-bold">Trending Pairs</h1>
+            <div className="flex items-center justify-between mb-6 w-full">
+              <div className="flex items-center gap-4 w-full justify-between mx-1">
+                <h1 className="text-lg font-medium text-gray-400">Trending Pairs</h1>
                 <a 
                   href="/events" 
-                  className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded text-sm hover:bg-purple-500/30 transition-colors"
+                  className=" text-gray-400 text-sm hover:text-gray-300 transition-colors"
                 >
-                  Live Events
+                  Live Trading Feed
                 </a>
               </div>
-              <div className="flex items-center gap-3">
+            </div>
+
+        {/* Status Tabs */}
+        <div className="bg-gray-950 rounded-lg overflow-hidden mb-6">
+          <div className="border-b border-gray-800">
+            <div className="flex items-center justify-between">
+              <div className="flex">
+                <button
+                  onClick={() => setSelectedFilter('New')}
+                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    selectedFilter === 'New' 
+                      ? 'border-green-400 text-green-400' 
+                      : 'border-transparent text-gray-400 hover:text-gray-300'
+                  }`}
+                >
+                  New ({statusCounts.new})
+                </button>
+                <button
+                  onClick={() => setSelectedFilter('Migrating')}
+                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    selectedFilter === 'Migrating' 
+                      ? 'border-yellow-400 text-yellow-400' 
+                      : 'border-transparent text-gray-400 hover:text-gray-300'
+                  }`}
+                >
+                  Migrating ({statusCounts.migrating})
+                </button>
+                <button
+                  onClick={() => setSelectedFilter('Migrated')}
+                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    selectedFilter === 'Migrated' 
+                      ? 'border-blue-400 text-blue-400' 
+                      : 'border-transparent text-gray-400 hover:text-gray-300'
+                  }`}
+                >
+                  Migrated ({statusCounts.migrated})
+                </button>
+              </div>
+              
+              <div className="flex items-center gap-4 pr-2">
                 <select
                   value={selectedDex}
                   onChange={(e) => setSelectedDex(e.target.value as 'pump-fun' | 'meteora-dbc')}
-                  className="bg-gray-800 border border-gray-700 rounded px-3 py-1 text-sm text-white outline-none"
+                  className=" border border-gray-800 rounded px-3 py-1 text-sm text-gray-400 outline-none"
                 >
                   <option value="pump-fun">Pump Fun</option>
                   <option value="meteora-dbc">Meteora DBC</option>
                 </select>
-                {getConnectionStatus()}
+                
+               
               </div>
             </div>
-
-        {/* Filters */}
-        <StatusFilter
-          selectedFilter={selectedFilter}
-          onFilterChange={setSelectedFilter}
-          counts={statusCounts}
-        />
+          </div>
+        </div>
 
         {/* Loading State */}
         {!isConnected && !error && (
@@ -123,14 +157,9 @@ const TrendingPairsDashboard: React.FC = () => {
         {isConnected && filteredData.length === 0 && data.length > 0 && (
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
-              <div className="text-gray-400 text-xl mb-4">🔍</div>
+              
               <p className="text-gray-400">No pairs found for &ldquo;{selectedFilter}&rdquo; status</p>
-              <button 
-                onClick={() => setSelectedFilter('New')}
-                className="mt-4 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
-              >
-                Show New
-              </button>
+             
             </div>
           </div>
         )}
@@ -139,7 +168,7 @@ const TrendingPairsDashboard: React.FC = () => {
         {isConnected && data.length === 0 && (
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
-              <div className="text-gray-400 text-xl mb-4">📊</div>
+              
               <p className="text-gray-400">Waiting for trending pairs from {selectedDex}...</p>
             </div>
           </div>

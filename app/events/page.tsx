@@ -97,22 +97,22 @@ const EventsPage: React.FC = () => {
   const getConnectionStatus = () => {
     if (isConnected) {
       return (
-        <div className="flex items-center gap-2 bg-green-500/20 px-3 py-1 rounded-lg">
-          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+        <div className="flex items-center gap-2 bg-green-500/20 px-3 py-1 rounded-xs">
+          <div className="w-2 h-2 bg-green-400 rounded-xs animate-pulse"></div>
           <span className="text-xs text-green-400 font-medium">Connected</span>
         </div>
       )
     } else if (error) {
       return (
-        <div className="flex items-center gap-2 bg-red-500/20 px-3 py-1 rounded-lg">
-          <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+        <div className="flex items-center gap-2 bg-red-500/20 px-3 py-1 rounded-xs">
+          <div className="w-2 h-2 bg-red-400 rounded-xs"></div>
           <span className="text-xs text-red-400 font-medium">Error</span>
         </div>
       )
     } else {
       return (
-        <div className="flex items-center gap-2 bg-yellow-500/20 px-3 py-1 rounded-lg">
-          <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+          <div className="flex items-center gap-2 bg-yellow-500/20 px-3 py-1 rounded-xs">
+          <div className="w-2 h-2 bg-yellow-400 rounded-xs animate-pulse"></div>
           <span className="text-xs text-yellow-400 font-medium">Connecting</span>
         </div>
       )
@@ -125,14 +125,15 @@ const EventsPage: React.FC = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-md font-medium">Bonding Curve Events</h1>
-            <p className="text-gray-500 text-xs">Real-time trade events from Kafka</p>
+            <h1 className="text-md font-medium text-gray-400">Live Trading Feed</h1>
+            
           </div>
           <div className="flex items-center gap-3">
+            <a href="/" className="text-gray-400 text-sm hover:text-gray-300 transition-colors">Trending Pairs</a>
             {getConnectionStatus()}
             <button
               onClick={isConnected ? disconnect : connect}
-              className={`p-2 rounded-lg transition-colors ${
+              className={`p-2 rounded-xs transition-colors ${
                 isConnected 
                   ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' 
                   : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
@@ -188,7 +189,7 @@ const EventsPage: React.FC = () => {
               
               <button
                 onClick={() => setPlatformFilter('all')}
-                className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                className={`px-3 py-1 rounded-xs text-xs transition-colors ${
                   platformFilter === 'all' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                 }`}
               >
@@ -196,7 +197,7 @@ const EventsPage: React.FC = () => {
               </button>
               <button
                 onClick={() => setPlatformFilter('pump-fun')}
-                className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                className={`px-3 py-1 rounded-xs text-xs transition-colors ${
                   platformFilter === 'pump-fun' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                 }`}
               >
@@ -204,7 +205,7 @@ const EventsPage: React.FC = () => {
               </button>
               <button
                 onClick={() => setPlatformFilter('raydium-amm-v4')}
-                className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                className={`px-3 py-1 rounded-xs text-xs transition-colors ${
                   platformFilter === 'raydium-amm-v4' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                 }`}
               >
@@ -212,7 +213,7 @@ const EventsPage: React.FC = () => {
               </button>
               <button
                 onClick={() => setPlatformFilter('meteora-dbc')}
-                className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                className={`px-3 py-1 rounded-xs text-xs transition-colors ${
                   platformFilter === 'meteora-dbc' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                 }`}
               >
@@ -220,7 +221,7 @@ const EventsPage: React.FC = () => {
               </button>
               <button
                 onClick={() => setPlatformFilter('meteora-damm-v2')}
-                className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                className={`px-3 py-1 rounded-xs text-xs transition-colors ${
                   platformFilter === 'meteora-damm-v2' ? 'bg-purple-500 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                 }`}
               >
@@ -229,7 +230,7 @@ const EventsPage: React.FC = () => {
               <div className="w-px h-4 bg-gray-600 mx-2"></div>
               <button
                 onClick={clearEvents}
-                className="px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-xs hover:bg-gray-700 transition-colors"
+                className="px-3 py-1 bg-gray-800 text-gray-300 rounded-xs text-xs hover:bg-gray-700 transition-colors"
               >
                 Clear
               </button>
@@ -239,7 +240,7 @@ const EventsPage: React.FC = () => {
 
         {/* Error State */}
         {error && (
-          <div className="bg-red-500/20 border border-red-500 rounded-lg p-4 mb-6">
+          <div className="bg-red-500/20 border border-red-500 rounded-xs p-4 mb-6">
             <div className="text-red-400 font-medium">Connection Error</div>
             <div className="text-red-300 text-sm">{error}</div>
             <button
@@ -252,7 +253,7 @@ const EventsPage: React.FC = () => {
         )}
 
         {/* Events Table */}
-        <div className="bg-gray-950 rounded-lg overflow-hidden">
+        <div className="bg-gray-950 rounded-xs overflow-hidden">
           {/* Navigation Tabs */}
           <div className="border-b border-gray-800">
             <div className="flex items-center justify-between">
@@ -289,11 +290,7 @@ const EventsPage: React.FC = () => {
                 </button>
               </div>
               
-              <div className="flex items-center gap-4 pr-4">
-                <div className="text-sm text-gray-400">
-                  Live Trading Feed
-                </div>
-              </div>
+              
             </div>
           </div>
 
@@ -493,22 +490,8 @@ const EventsPage: React.FC = () => {
           {filteredEvents.length > 0 && (
             <div className="border-t border-gray-800 bg-gray-900/50 px-6 py-3">
               <div className="flex items-center justify-between text-sm text-gray-400">
-                <span>
-                  Live Trading Feed
-                </span>
-                <div className="flex items-center gap-4">
-                  {isConnected ? (
-                    <div className="flex items-center gap-2 bg-green-500/20 px-2 py-1 rounded">
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-xs text-green-400 font-medium">Live</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 bg-yellow-500/20 px-2 py-1 rounded">
-                      <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                      <span className="text-xs text-yellow-400 font-medium">⏸ Paused</span>
-                    </div>
-                  )}
-                </div>
+               
+                
               </div>
             </div>
           )}
