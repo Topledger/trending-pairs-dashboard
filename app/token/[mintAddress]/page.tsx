@@ -27,10 +27,10 @@ const TokenDetailPage: React.FC = () => {
     return null
   }, [searchParams])
   
-  const { events, isConnected, error, stats, connect, disconnect } = useKafkaConsumer()
+  const { events, isConnected, error, connect, disconnect } = useKafkaConsumer()
   const { data: trendingPairs } = useWebSocket('ws://34.107.31.9/ws/trending-pairs', 'pump-fun')
-  const { traders: topTraders, isConnected: tradersConnected, error: tradersError, subscribe: subscribeToTraders, reconnect: reconnectTraders } = useTopTradersWebSocket()
-  const { holders: topHolders, isConnected: holdersConnected, error: holdersError, subscribe: subscribeToHolders, reconnect: reconnectHolders } = useTopHoldersWebSocket()
+  const { traders: topTraders, isConnected: tradersConnected, subscribe: subscribeToTraders } = useTopTradersWebSocket()
+  const { holders: topHolders, isConnected: holdersConnected, subscribe: subscribeToHolders } = useTopHoldersWebSocket()
   
   const [filter, setFilter] = useState<'all' | 'buy' | 'sell' | 'traders' | 'holders'>('all')
   const [copiedItems, setCopiedItems] = useState<Set<string>>(new Set())

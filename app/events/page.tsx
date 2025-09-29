@@ -1,11 +1,11 @@
 'use client'
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 import { useKafkaConsumer } from '../hooks/useKafkaConsumer'
-import TradeEventCard from '../components/TradeEventCard'
 
 const EventsPage: React.FC = () => {
-  const { events, isConnected, error, stats, connect, disconnect, clearEvents } = useKafkaConsumer()
+  const { events, isConnected, error, connect, disconnect, clearEvents } = useKafkaConsumer()
   const [filter, setFilter] = useState<'all' | 'buy' | 'sell'>('all')
   const [platformFilter, setPlatformFilter] = useState<'all' | 'pump-fun' | 'raydium-amm-v4' | 'meteora-dbc' | 'meteora-damm-v2'>('all')
   const [mintFilter, setMintFilter] = useState<string>('')
@@ -129,7 +129,7 @@ const EventsPage: React.FC = () => {
             
           </div>
           <div className="flex items-center gap-3">
-            <a href="/" className="text-gray-400 text-sm hover:text-gray-300 transition-colors">Trending Pairs</a>
+            <Link href="/" className="text-gray-400 text-sm hover:text-gray-300 transition-colors">Trending Pairs</Link>
             {getConnectionStatus()}
             <button
               onClick={isConnected ? disconnect : connect}

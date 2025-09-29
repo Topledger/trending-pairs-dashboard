@@ -33,30 +33,6 @@ const TrendingPairsDashboard: React.FC = () => {
     }
   }, [data])
 
-  const getConnectionStatus = () => {
-    if (isConnected) {
-      return (
-        <div className="flex items-center gap-2 bg-green-500/20 px-3 py-1 rounded-lg">
-          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-          <span className="text-xs text-green-400 font-medium">Live</span>
-        </div>
-      )
-    } else if (error) {
-      return (
-        <div className="flex items-center gap-2 bg-red-500/20 px-3 py-1 rounded-lg">
-          <div className="w-2 h-2 bg-red-400 rounded-full"></div>
-          <span className="text-xs text-red-400 font-medium">Error</span>
-        </div>
-      )
-    } else {
-      return (
-        <div className="flex items-center gap-2 bg-yellow-500/20 px-3 py-1 rounded-lg">
-          <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-          <span className="text-xs text-yellow-400 font-medium">Connecting</span>
-        </div>
-      )
-    }
-  }
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
