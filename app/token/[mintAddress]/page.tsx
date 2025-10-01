@@ -138,6 +138,21 @@ const TokenDetailPage: React.FC = () => {
     }
   }
 
+  const formatTimestamp = (timestamp: number) => {
+    if (!timestamp) return 'N/A'
+    const date = new Date(timestamp * 1000)
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
+    const minutes = Math.floor(diff / 60000)
+    const hours = Math.floor(minutes / 60)
+    const days = Math.floor(hours / 24)
+    
+    if (days > 0) return `${days}d ago`
+    if (hours > 0) return `${hours}h ago`
+    if (minutes > 0) return `${minutes}m ago`
+    return 'Just now'
+  }
+
   const handleCopyItem = async (text: string, itemId: string) => {
     try {
       // Try modern clipboard API first (requires HTTPS)
@@ -428,7 +443,7 @@ const TokenDetailPage: React.FC = () => {
               {/* Table Header */}
               <div className="border-b border-gray-800 bg-gray-900/50">
                 {filter === 'traders' ? (
-                  <div className="grid grid-cols-5 gap-4 px-6 py-3 text-sm font-medium text-gray-400">
+                  <div className="min-w-[1200px] grid grid-cols-8 gap-3 px-6 py-3 text-sm font-medium text-gray-400">
                     <div className="flex items-center gap-2">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
@@ -443,21 +458,39 @@ const TokenDetailPage: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      </svg>
+                      PnL (Realized/Unrealized)
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Activity Timeline
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                       </svg>
-                      Trades
+                      Buy/Sell Count
                     </div>
                     <div className="flex items-center gap-2">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                       </svg>
-                      PnL
+                      Bought/Sold USD
                     </div>
                     <div className="flex items-center gap-2">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                       </svg>
-                      Volume
+                      Bought/Sold Tokens
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      </svg>
+                      Current Balance
                     </div>
                   </div>
                 ) : filter === 'holders' ? (
@@ -486,12 +519,7 @@ const TokenDetailPage: React.FC = () => {
                         </svg>
                         Value USD
                       </div>
-                      <div className="flex items-center gap-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                        % Supply
-                      </div>
+                      
                       <div className="flex items-center gap-2">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -592,73 +620,122 @@ const TokenDetailPage: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                topTraders.slice(0, 50).map((trader, index) => (
-                  <div 
-                    key={trader.wallet_address || `trader-${index}`}
-                    className="grid grid-cols-5 gap-4 px-6 py-4 border-b border-gray-800/50 hover:bg-gray-900/30 transition-colors"
-                  >
-                    {/* Rank */}
-                    <div className="flex items-center justify-center w-8 h-8 bg-gray-700 rounded-full text-sm font-medium text-gray-300">
-                      {index + 1}
-                    </div>
+                <div className="min-w-[1200px]">
+                  {topTraders.slice(0, 50).map((trader, index) => (
+                    <div 
+                      key={trader.wallet_address || `trader-${index}`}
+                      className="grid grid-cols-8 gap-3 px-6 py-4 border-b border-gray-800/50 hover:bg-gray-900/30 transition-colors"
+                    >
+                      {/* Rank */}
+                      <div className="flex items-center justify-center w-8 h-8 bg-gray-700 rounded-full text-sm font-medium text-gray-300">
+                        {index + 1}
+                      </div>
 
-                    {/* Trader */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm">🧑‍💻</span>
-                      <button
-                        onClick={() => window.open(`https://solscan.io/account/${trader.wallet_address}`, '_blank')}
-                        className="text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium"
-                      >
-                        {formatAddress(trader.wallet_address)}
-                      </button>
-                      <button
-                        onClick={() => handleCopyItem(trader.wallet_address, `trader-${trader.wallet_address}`)}
-                        className={`transition-colors ${
-                          copiedItems.has(`trader-${trader.wallet_address}`) 
-                            ? 'text-green-400' 
-                            : 'text-gray-500 hover:text-green-400'
-                        }`}
-                        title="Copy wallet address"
-                      >
-                        {copiedItems.has(`trader-${trader.wallet_address}`) ? (
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
+                      {/* Trader */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">🧑‍💻</span>
+                        <button
+                          onClick={() => window.open(`https://solscan.io/account/${trader.wallet_address}`, '_blank')}
+                          className="text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium"
+                        >
+                          {formatAddress(trader.wallet_address)}
+                        </button>
+                        <button
+                          onClick={() => handleCopyItem(trader.wallet_address, `trader-${trader.wallet_address}`)}
+                          className={`transition-colors ${
+                            copiedItems.has(`trader-${trader.wallet_address}`) 
+                              ? 'text-green-400' 
+                              : 'text-gray-500 hover:text-green-400'
+                          }`}
+                          title="Copy wallet address"
+                        >
+                          {copiedItems.has(`trader-${trader.wallet_address}`) ? (
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          ) : (
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
 
-                    {/* Trades */}
-                    <div className="text-white text-sm">
-                      {(trader.buy_count || 0) + (trader.sell_count || 0)}
-                      <div className="text-xs text-gray-500">
-                        <span className="text-green-400">{trader.buy_count || 0}B</span> / <span className="text-red-400">{trader.sell_count || 0}S</span>
+                      {/* PnL (Realized/Unrealized) */}
+                      <div className="text-sm">
+                        <div className={`font-medium ${
+                          (trader.realized_pnl_usd || 0) >= 0 ? 'text-green-400' : 'text-red-400'
+                        }`}>
+                          {(trader.realized_pnl_usd || 0) >= 0 ? '+' : ''}{formatVolume(Math.abs(trader.realized_pnl_usd || 0))}
+                          <span className="text-gray-400"> / </span>
+                          <span className={`${((trader.unrealized_pnl_usd as number) || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {((trader.unrealized_pnl_usd as number) || 0) >= 0 ? '+' : ''}{formatVolume(Math.abs((trader.unrealized_pnl_usd as number) || 0))}
+                          </span>
+                        </div>
+                        <div className={`text-xs font-medium ${
+                          (trader.realized_pnl_usd || 0) >= 0 ? 'text-gray-400' : 'text-gray-400'
+                        }`}>
+                          {((trader.realized_pnl_pct || 0) >= 0 ? '+' : '')}{(trader.realized_pnl_pct || 0).toFixed(1)}%
+                          <span className="text-gray-400"> / </span>
+                          <span className={`${((trader.unrealized_pnl_pct as number) || 0) >= 0 ? 'text-gray-400' : 'text-gray-400'}`}>
+                            {(((trader.unrealized_pnl_pct as number) || 0) >= 0 ? '+' : '')}{((trader.unrealized_pnl_pct as number) || 0).toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Activity Timeline */}
+                      <div className="text-gray-300 text-sm">
+                        <div className="text-xs">
+                          First: {formatTimestamp(trader.first_buy_ts as number)}
+                        </div>
+                        <div className="text-xs">
+                          Last: {formatTimestamp(trader.last_activity_token_ts as number)}
+                        </div>
+                      </div>
+
+                      {/* Buy/Sell Count */}
+                      <div className="text-white text-sm">
+                        {(trader.buy_count || 0) + (trader.sell_count || 0)} trades
+                        <div className="text-xs text-gray-500">
+                          <span className="text-green-400">{trader.buy_count || 0}B</span> / <span className="text-red-400">{trader.sell_count || 0}S</span>
+                        </div>
+                      </div>
+
+                      {/* Bought/Sold USD */}
+                      <div className="text-sm">
+                        <div className="text-xs text-green-400">
+                          Bought: {formatVolume(trader.bought_usd || 0)}
+                        </div>
+                        <div className="text-xs text-red-400">
+                          Sold: {formatVolume(trader.sold_usd || 0)}
+                        </div>
+                      </div>
+
+                      {/* Bought/Sold Tokens */}
+                      <div className="text-sm">
+                        <div className="text-xs text-green-400">
+                          Bought: {formatTokenAmount(trader.bought_tokens || 0)}
+                        </div>
+                        <div className="text-xs text-red-400">
+                          Sold: {formatTokenAmount(trader.sold_tokens || 0)}
+                        </div>
+                      </div>
+
+                      {/* Current Balance */}
+                      <div className="text-white text-sm">
+                        <div className="text-xs">
+                          Tokens: {formatTokenAmount(trader.current_token_balance || 0)}
+                        </div>
+                        <div className="text-xs text-purple-400">
+                          SOL: {(trader.current_sol_balance || 0).toFixed(4)}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Transferred: {formatTokenAmount((trader.transferred_amount as number) || 0)}
+                        </div>
                       </div>
                     </div>
-
-                    {/* PnL */}
-                    <div className={`text-sm font-medium ${
-                      (trader.realized_pnl_usd || 0) >= 0 ? 'text-green-400' : 'text-red-400'
-                    }`}>
-                      {(trader.realized_pnl_usd || 0) >= 0 ? '+' : ''}{formatVolume(Math.abs(trader.realized_pnl_usd || 0))}
-                      <div className="text-xs text-gray-500">
-                        {((trader.realized_pnl_pct || 0) >= 0 ? '+' : '')}{(trader.realized_pnl_pct || 0).toFixed(1)}%
-                      </div>
-                    </div>
-
-                    {/* Volume */}
-                    <div className="text-white text-sm">
-                      {formatVolume((trader.bought_usd || 0) + (trader.sold_usd || 0))}
-                      <div className="text-xs text-gray-500">
-                        B: {formatVolume(trader.bought_usd || 0)} | S: {formatVolume(trader.sold_usd || 0)}
-                      </div>
-                    </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )
             ) : filter === 'holders' ? (
               // Top Holders Tab Content
@@ -749,13 +826,7 @@ const TokenDetailPage: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* % Supply */}
-                        <div className="text-orange-400 text-sm font-medium">
-                          {(((holder.percentage_of_supply as number) || 0)).toFixed(2)}%
-                          <div className="text-xs text-gray-500">
-                            of supply
-                          </div>
-                        </div>
+                       
 
                         {/* Unrealized PnL */}
                         <div className={`text-sm font-medium ${
