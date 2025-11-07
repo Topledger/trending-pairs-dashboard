@@ -16,6 +16,8 @@ export interface TrendingPair {
   age: string
   status: 'New' | 'Migrating' | 'Migrated'
   creationTimestamp: number
+  liquidity_usd?: number
+  native_liquidity?: number
   social?: {
     twitter?: string
     telegram?: string
@@ -197,6 +199,8 @@ const processRawPair = (rawData: Record<string, unknown>): TrendingPair => {
     age,
     status,
     creationTimestamp,
+    liquidity_usd: parseFloat(String(rawData.liquidity_usd || '0')),
+    native_liquidity: parseFloat(String(rawData.native_liquidity || '0')),
     image: extractImageFromUriSync(String(rawData.uri || '')) || (rawData.image_uri ? String(rawData.image_uri) : undefined),
     social: {
       website: rawData.website ? String(rawData.website) : undefined,

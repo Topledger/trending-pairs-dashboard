@@ -1236,6 +1236,18 @@ const TokenDetailPage: React.FC = () => {
                               {((liveTokenInfo?.metrics?.sniperWalletsPct || tokenData?.metrics?.sniperWalletsPct || 0).toFixed(0))}%
                             </span>
                           </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400 text-sm">Liquidity USD</span>
+                            <span className="text-white font-medium text-sm">
+                              {formatVolume((liveTokenInfo?.liquidity_usd || tokenData?.liquidity_usd || 0))}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400 text-sm">Native Liquidity</span>
+                            <span className="text-white font-medium text-sm">
+                              ${((liveTokenInfo?.native_liquidity || tokenData?.native_liquidity || 0).toFixed(2))}
+                            </span>
+                          </div>
                         </>
                       ) : (
                         <>
